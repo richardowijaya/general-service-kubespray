@@ -4,7 +4,6 @@ from models import RegionModel
 from schemas import RegionSchema
 from sqlalchemy.orm import Session
 from database.database import get_db
-from repositories.AddRoute import add_route
 
 router = APIRouter(tags=["Region"],prefix="/api/general")
 @router.get("/Region")
@@ -28,5 +27,3 @@ def post_new_region(payload:RegionSchema.MtrRegionSchema,db:Session=Depends(get_
         "status" : "success",
         "new Preprinted Region" : new_data
     }
-
-add_route(router)

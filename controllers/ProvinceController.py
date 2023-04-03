@@ -4,7 +4,6 @@ from models import ProvinceModel
 from schemas import ProvinceSchema
 from sqlalchemy.orm import Session
 from database.database import get_db
-from repositories.AddRoute import add_route
 
 router = APIRouter(tags=["Country"],prefix="/api/general")
 
@@ -30,5 +29,3 @@ def post_province(payload:ProvinceSchema.MtrProvinceSchema,db:Session=Depends(ge
         "status" : "success",
         "new province" : new_data
     }
-
-add_route(router)
