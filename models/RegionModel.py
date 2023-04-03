@@ -1,5 +1,5 @@
 from sqlalchemy import Column,String,Integer,DateTime,Boolean,CHAR
-from database.database import Base
+from database.database import Base,engine
 
 class MtrRegion(Base):
     __tablename__ = 'mtr_region'
@@ -8,3 +8,5 @@ class MtrRegion(Base):
     regional_code = Column(String(10),nullable=True)
     regional_name = Column(String(35),nullable=True)
     user_id = Column(Integer,nullable=False)
+
+MtrRegion.metadata.create_all(bind=engine)

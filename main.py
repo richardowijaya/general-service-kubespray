@@ -1,10 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database.database import engine
-from models import RegionModel
-from controllers import RegionController
-
-RegionModel.Base.metadata.create_all(bind=engine)
+import repositories.AddControllers #manual function that created using basic libraries in python
+#from repositories.AddRoute import router
 
 app = FastAPI()
 
@@ -21,4 +18,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(RegionController.router,tags=["DMS_General_Master"],prefix="/api/general")
+#app.include_router(router)
+app.include_router(repositories.AddControllers.populate_router)

@@ -4,8 +4,9 @@ from models import RegionModel
 from schemas import RegionSchema
 from sqlalchemy.orm import Session
 from database.database import get_db
+from repositories.AddRoute import add_route
 
-router = APIRouter()
+router = APIRouter(tags=["Region"],prefix="/api/general")
 @router.get("/Region")
 def get_regions(db:Session=Depends(get_db)):
     items = RegionCRUD.get_regioncruds(db)
@@ -20,10 +21,6 @@ def get_regions(db:Session=Depends(get_db)):
 @router.post("/Region")
 def post_new_region(payload:RegionSchema.MtrRegionSchema,db:Session=Depends(get_db)):
     new_data = RegionModel.MtrRegion(**payload.dict())
-    if new_data.is_active == True:
-        new_data.is_active = 1
-    else:
-        new_data.is_active = 0
     db.add(new_data)
     db.commit()
     db.refresh(new_data)
@@ -31,3 +28,5 @@ def post_new_region(payload:RegionSchema.MtrRegionSchema,db:Session=Depends(get_
         "status" : "success",
         "new Preprinted Region" : new_data
     }
+
+add_route(router)

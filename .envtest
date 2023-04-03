@@ -1,0 +1,5 @@
+DB_USER=nomad2805
+DB_PASSWORD=Zhiff%40hmi3310
+DB_SERVER=localhost
+DB_PORT=5432
+DB_NAME=mydb

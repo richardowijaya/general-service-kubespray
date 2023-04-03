@@ -1,11 +1,15 @@
 1) default project structure
 parent
+--[configs]
 --[controllers]
 --[cruds]
 --[database]
 --[models]
+--[repositories]
 --[schemas] 
 --main.py
+--env
+--alembic.ini
 
 2) make sure to install alembic then run alembic init alembic to generate the migration tools
 New project structure
