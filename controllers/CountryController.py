@@ -3,7 +3,7 @@ from cruds import CountryCRUD
 from models import CountryModel
 from schemas import CountrySchema
 from sqlalchemy.orm import Session
-from database.database import get_db
+from configs.database import get_db
 
 router = APIRouter(tags=["Province"],prefix="/api/general")
 

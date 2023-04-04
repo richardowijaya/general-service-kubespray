@@ -3,9 +3,10 @@ from cruds import RegionCRUD
 from models import RegionModel
 from schemas import RegionSchema
 from sqlalchemy.orm import Session
-from database.database import get_db
+from configs.database import get_db
 
 router = APIRouter(tags=["Region"],prefix="/api/general")
+
 @router.get("/Region")
 def get_regions(db:Session=Depends(get_db)):
     items = RegionCRUD.get_regioncruds(db)

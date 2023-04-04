@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import repositories.AddControllers #manual function that created using basic libraries in python
+import utils.AddControllers #manual function that created using basic libraries in python
 
 app = FastAPI()
 
@@ -17,4 +17,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(repositories.AddControllers.populate_router)
+app.include_router(utils.AddControllers.populate_router)
