@@ -1,4 +1,5 @@
 from sqlalchemy import Column,String,Integer,Boolean
+from sqlalchemy.orm import relationship
 from configs.database import Base,engine
 
 class MtrRegion(Base):
@@ -8,5 +9,7 @@ class MtrRegion(Base):
     regional_code = Column(String(10),nullable=True)
     regional_name = Column(String(35),nullable=True)
     user_id = Column(Integer,nullable=False)
+
+    regions = relationship("MtrCompany",backref="mtr_region")
 
 MtrRegion.metadata.create_all(bind=engine)

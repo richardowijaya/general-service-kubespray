@@ -1,4 +1,4 @@
-from sqlalchemy import CHAR,String,Integer,Boolean, Column,ForeignKey,DateTime
+from sqlalchemy import CHAR,String,Integer,Boolean, Column,ForeignKey,DateTime,Float
 from sqlalchemy.orm import relationship
 from configs.database import Base,engine
 
@@ -25,7 +25,26 @@ class MtrCompany(Base):
     vat_pkp_type = Column(CHAR(1),nullable=True,default="")
     vat_pkp_no = Column(String(30),nullable=True,default="")
     vat_pkp_date = Column(DateTime,nullable=True,default="")
-    vat_kpp_id = Column
+    vat_kpp_id = Column(Integer,ForeignKey("mtr_kpp.kpp_id"))
+    tax_npwp_no = Column(String(30),nullable=False)
+    tax_npwp_data = Column(DateTime,nullable=True,default="")
+    tax_address_id = Column(Integer,ForeignKey("mtr_address.address_id"))
+    tax_pkp_type = Column(CHAR(1),nullable=True,default="")
+    tax_pkp_no = Column(String(30),nullable=True,default="")
+    tax_pkp_date = Column(DateTime,nullable=True,default="")
+    tax_kpp_id = Column(Integer,ForeignKey("mtr_kpp.kpp_id"))
+    region_id = Column(Integer,ForeignKey("mtr_region.region_id"))
+    finance_area_id = Column(Integer,ForeignKey("mtr_finance_area.finance_area_id"))
+    area_id = Column(Integer,ForeignKey("mtr_area.area_id"))
+    incentive_group_id = Column(Integer,ForeignKey("mtr_incentive_group.incentive_group_id"))
+    after_sales_id = Column(Integer,ForeignKey("mtr_after_sales.after_sales_id"))
+    company_ownership_id = Column(Integer,ForeignKey("mtr_company_ownership_id.company_ownership_id"))
+    business_category_id = Column(Integer,ForeignKey("mtr_business_category.business_category_id"))
+    term_of_payment_id = Column(Integer,ForeignKey("mtr_term_of_payment.term_of_payment_id"))
+    company_dealer_kia_code = Column(String(10),nullable=True,default="")
+    company_no_of_stall = Column(Float,nullable=True,default=0)
+    is_distributor = Column(Boolean,nullable=True,default=False)
+
 
     companies = relationship("MtrAddress",backref="mtr_company")
 
