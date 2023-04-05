@@ -343,5 +343,3 @@ class MtrWorkorderType(Base):
     workorder_type_id = Column(Integer, primary_key=True)
     workorder_type_code = Column(String(10), nullable=False)
     workorder_type_name = Column(String(50), nullable=False)
-
-

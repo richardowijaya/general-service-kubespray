@@ -33,18 +33,17 @@ class MtrCompany(Base):
     tax_pkp_no = Column(String(30),nullable=True,default="")
     tax_pkp_date = Column(DateTime,nullable=True,default="")
     tax_kpp_id = Column(Integer,ForeignKey("mtr_kpp.kpp_id"))
-    region_id = Column(Integer,ForeignKey("mtr_region.region_id"))
+    regional_id = Column(Integer,ForeignKey("mtr_region.regional_id"))
     finance_area_id = Column(Integer,ForeignKey("mtr_finance_area.finance_area_id"))
     area_id = Column(Integer,ForeignKey("mtr_area.area_id"))
     incentive_group_id = Column(Integer,ForeignKey("mtr_incentive_group.incentive_group_id"))
-    after_sales_id = Column(Integer,ForeignKey("mtr_after_sales.after_sales_id"))
+    aftersales_area_id = Column(Integer,ForeignKey("mtr_aftersales_area.aftersales_area_id"))
     company_ownership_id = Column(Integer,ForeignKey("mtr_company_ownership_id.company_ownership_id"))
     business_category_id = Column(Integer,ForeignKey("mtr_business_category.business_category_id"))
     term_of_payment_id = Column(Integer,ForeignKey("mtr_term_of_payment.term_of_payment_id"))
     company_dealer_kia_code = Column(String(10),nullable=True,default="")
     company_no_of_stall = Column(Float,nullable=True,default=0)
     is_distributor = Column(Boolean,nullable=True,default=False)
-
 
     companies = relationship("MtrAddress",backref="mtr_company")
 

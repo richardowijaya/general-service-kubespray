@@ -1,5 +1,5 @@
-DB_USER=<username>
-DB_PASSWORD=<userpassword>
+DB_USER=nomad2805
+DB_PASSWORD=Zhiff%40hmi3310
 DB_SERVER=localhost
-DB_PORT=<dbport>
-DB_NAME=<dbname>
+DB_PORT=5432
+DB_NAME=mydb

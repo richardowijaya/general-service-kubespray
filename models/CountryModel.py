@@ -10,7 +10,7 @@ class MtrCountry(Base):
     country_name = Column(String(100),nullable=False)
     country_language = Column(String(20),nullable=False,default="")
     country_phone = Column(String(15),nullable=False,default="")
-    currency_id = Column(Integer,nullable=False) #in relation with mtr_currenty in finance module
+    currency_id = Column(Integer,nullable=False) #relation with mtr_currency in finance module
 
     provinces = relationship("MtrProvince",backref="mtr_country")
 
