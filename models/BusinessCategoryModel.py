@@ -9,6 +9,6 @@ class MtrBusinessCategory(Base):
     business_category_code = Column(String(20),nullable=False,unique=True)
     business_category_name = Column(String(256),nullable=True,default="")
 
-    business_categories = relationship("MtrCompany",backref="mtr_business_category")
+    #business_categories = relationship("MtrCompany",backref="mtr_business_category")
 
 MtrBusinessCategory.metadata.create_all(bind=engine)

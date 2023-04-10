@@ -5,7 +5,7 @@ from schemas import ProvinceSchema
 from sqlalchemy.orm import Session
 from configs.database import get_db
 
-router = APIRouter(tags=["Country"],prefix="/api/general")
+router = APIRouter(tags=["Province"],prefix="/api/general")
 
 @router.get("/Province")
 def get_provinces(db:Session=Depends(get_db)):

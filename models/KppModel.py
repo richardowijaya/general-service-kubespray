@@ -10,6 +10,6 @@ class MtrKpp(Base):
     kpp_name = Column(String(100),nullable=True,default="")
     kpp_phone_no = Column(String(14),nullable=True,default="")
 
-    kpps = relationship("MtrCompany",backref="mtr_kpp")
+    #kpps = relationship("MtrCompany",backref="mtr_kpp")
 
 MtrKpp.metadata.create_all(bind=engine)

@@ -9,6 +9,6 @@ class MtrCompanyOwnership(Base):
     company_ownership_type = Column(String(10),nullable=False,unique=True)
     company_ownership_name = Column(String(100),nullable=True,default="")
 
-    ownerships = relationship("MtrCompany",backref="mtr_company_ownership")
+    #ownerships = relationship("MtrCompany",backref="mtr_company_ownership")
 
 MtrCompanyOwnership.metadata.create_all(bind=engine)

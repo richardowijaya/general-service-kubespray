@@ -11,6 +11,6 @@ class MtrAddress(Base):
     address_street = Column(String(100),nullable=False)
     address_type = Column(String(5),nullable=True,default="")
 
-    addresses = relationship("MtrCompany",backref="mtr_address")
+    #addresses = relationship("MtrCompany",backref="mtr_address")
 
 MtrAddress.metadata.create_all(bind=engine)

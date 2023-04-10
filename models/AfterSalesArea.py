@@ -9,6 +9,6 @@ class MtrAftersalesArea(Base):
     aftersales_area_code = Column(String(20), nullable=False, unique=True)
     aftersales_area_name = Column(String(256),nullable=True,default="")
 
-    aftersales_areas = relationship("MtrCompany",backref="mtr_aftersales_area")
+    #aftersales_areas = relationship("MtrCompany",backref="mtr_aftersales_area")
 
 MtrAftersalesArea.metadata.create_all(bind=engine)

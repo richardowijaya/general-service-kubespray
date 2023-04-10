@@ -9,6 +9,6 @@ class MtrFinanceArea(Base):
     finance_area_code = Column(String(20),nullable=False,unique=True)
     finance_area_name = Column(String(256),nullable=True,default="")
 
-    finance_areas = relationship("MtrCompany",backref="mtr_finance_area")
+    #finance_areas = relationship("MtrCompany",backref="mtr_finance_area")
 
 MtrFinanceArea.metadata.create_all(bind=engine)

@@ -12,6 +12,6 @@ class MtrTermOfPayment(Base):
     term_of_payment_name = Column(String(100),nullable=True,default="")
     term_of_payment_policy = Column(CHAR(1),nullable=True,default="")
 
-    TOPS = relationship("MtrCompany",backref="mtr_term_of_payment")
+    #TOPS = relationship("MtrCompany",backref="mtr_term_of_payment")
 
 MtrTermOfPayment.metadata.create_all(bind=engine)
