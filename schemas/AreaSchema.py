@@ -6,12 +6,22 @@ class MtrAreaSchema(BaseModel):
     area_id:int
     area_code:str
     description:str
-    user_id:int #relation with user in login module/service
+    region_id:int #relation with user in login module/service
 
     class Config:
         orm_mode_= True
 
-class MtrAreaResponse(BaseModel):
+class MtrAreaRequest(BaseModel):
+    area_code:str
+    description:str
+    region_id:int
+
+class MtrAreaResponses(BaseModel):
     status:str
     results:int
     payloads:List[MtrAreaSchema] 
+
+class MtrAreaResponse(BaseModel):
+    status_code:int
+    msg_status:str
+    data:MtrAreaSchema
