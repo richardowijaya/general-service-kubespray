@@ -1,27 +1,43 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException,status
 from models import ProvinceModel
+from schemas import ProvinceSchema
 
-def get_provinces_cruds(db:Session):
-    provinces = db.query(ProvinceModel.MtrProvince).all()
-    return provinces
+#get all data
+def get_province_all(db:Session,skip:int=0,limit:int=100):
+    return db.query(ProvinceModel.MtrProvince).offset(skip).limit(limit).all()
 
-def get_province_id(db:Session,get_id:int):
-    province = db.query(ProvinceModel.MtrProvince).filter(ProvinceModel.MtrProvince.province_id==get_id)
-    return province
+#get data by filtering the primary_key(ID)
+def get_province_by_id(db:Session,get_id:int):
+    return db.query(ProvinceModel.MtrProvince).filter(ProvinceModel.MtrProvince.province_id==get_id).first()
 
-def post_provinces_cruds(payload:ProvinceModel.MtrProvince):
-    new_data = payload(**payload.dict())
-    if new_data.is_active == True:
-        new_data.is_active = 1
-    else:
-        new_data.is_active = 0
-    return new_data
+#post / create new data
+def post_new_province(db:Session,province:ProvinceSchema.MtrProvinceSchema):
+    _province = ProvinceModel.MtrProvince()
+    _province.province_code = province.province_code
+    _province.province_name = province.province_name
+    _province.country_id = province.country_id
+    db.add(_province)
+    db.commit()
+    db.refresh(_province)
+    print(_province)
+    return _province
 
-def delete_province_crud(del_id:int,db:Session):
-    check_id = db.query(ProvinceModel.MtrProvince).filter(ProvinceModel.MtrProvince.province_id==del_id).first()
-    return check_id
+#delete data by primary_key(ID)
+def del_province(db:Session,del_id:int):
+    _province = get_province_by_id(db=db,get_id=del_id)
+    db.delete(_province)
+    db.commit()
+    return {
+        "status_code":200,
+        "msg_status":"deleted"
+    }
 
-def update_province_cruds(payload:ProvinceModel.MtrProvince,edit_id:int,db:Session):
-    check_id = db.query(payload).filter(payload.province_id==edit_id)
-    return check_id
+#update data by primary_key(ID)
+def update_province(db:Session,update_id:int,province:ProvinceSchema.MtrProvinceSchema):
+    _province = get_province_by_id(db,update_id)
+    _province.province_code = province.province_code
+    _province.province_name = province.province_name
+    _province.country_id = province.country_id
+    db.commit()
+    db.refresh(_province)
+    return _province

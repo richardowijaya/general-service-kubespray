@@ -1,67 +1,42 @@
-from fastapi import APIRouter,Depends,HTTPException,status,Response
-from cruds import CountryCRUD
-from models import CountryModel
-from schemas import CountrySchema
+from fastapi import APIRouter,Depends,HTTPException,status
 from sqlalchemy.orm import Session
 from configs.database import get_db
+from cruds import CountryCRUD
+from schemas import CountrySchema
 
 router = APIRouter(tags=["Country"],prefix="/api/general")
 
-@router.get("/Country")
-def get_countries(db:Session=Depends(get_db)):
-    items = CountryCRUD.get_countries_cruds(db)
-    if not items:
-        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT,detail="data not found")
-    return {
-        "status" : "success",
-        "results" : len(items),
-        "data" : items
-    }
+@router.get("/country",status_code=status.HTTP_200_OK)
+async def get_all_data(db:Session=Depends(get_db)):
+    results = CountryCRUD.get_country_all(db,0,100)
+    if not results:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="data not found")
+    return CountrySchema.MtrCountryResponses(status_code=200,msg_status="success",data=results)
 
-@router.get("/Country/{id}")
-def get_country(id:int,db:Session=Depends(get_db)):
-    item = CountryCRUD.get_country_id(db,id)
-    if not item:
-        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT,detail="data id:{id} not found")
-    return {
-        "status" : "success",
-        "data" : item
-    }
+@router.get("/country/{id}",status_code=status.HTTP_200_OK)
+async def get_by_id(id:int,db:Session=Depends(get_db)):
+    result = CountryCRUD.get_country_by_id(db,id)
+    print(result,type(result))
+    if not result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"data with ID {id} not existed")
+    return CountrySchema.MtrCountryResponse(status_code=200,msg_status="success",data=result)
 
-@router.post("/Country")
-def post_country(payload:CountrySchema.MtrCountrySchema,db:Session=Depends(get_db)):
-    new_data = CountryModel.MtrCountry(**payload.dict())
-    db.add(new_data)
-    db.commit()
-    db.refresh(new_data)
-    return {
-        "status" : "success",
-        "new country" : new_data
-    }
+@router.delete("/country/{id}",status_code=status.HTTP_204_NO_CONTENT)
+async def delete_data(id:int,db:Session=Depends(get_db)):
+    check = CountryCRUD.del_country(db,id)
+    print(check)
+    if not check:
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"data with ID {id} is invalid")
+    return check
 
-@router.delete("/Country/{id}")
-def delete_country(id:int,db:Session=Depends(get_db)):
-    del_data = CountryCRUD.delete_country_crud(id,db)
-    if not del_data:
-        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT,detail="data id:{id} not found")
-    db.delete(del_data)
-    db.commit()
-    return Response(status_code=status.HTTP_200_OK)
+@router.post("/country",status_code=status.HTTP_201_CREATED)
+async def create_data(request:CountrySchema.MtrCountryRequest,db:Session=Depends(get_db)):
+    new_data = CountryCRUD.post_new_country(db,request)
+    if not new_data:
+        return HTTPException(status_code=status.HTTP_409_CONFLICT,detail=f"data already existed")
+    return CountrySchema.MtrCountryResponse(status_code=200,msg_status="success",data=new_data)
 
-@router.put("/Country/{id}")
-def update_country(id:int,payload:CountrySchema.MtrCountrySchema,db:Session=Depends(get_db)):
-    check_id = db.query(CountryModel.MtrCountry).filter(CountryModel.MtrCountry.country_id==id)
-    update_data_new = check_id.first()
-    #check_id = CountryCRUD.update_country_cruds(payload,db,)
-    #update_data_new = check_id.first()
-    if not check_id:
-        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT,detail="data id:{id} not found")
-    update_data = payload.dict(exclude_unset=True)
-    check_id.filter(CountryModel.MtrCountry.country_id==id).update(update_data,synchronize_session=False)
-    db.commit()
-    db.refresh(update_data_new)
-    return{
-        "status" : "updated",
-        "data" : update_data_new
-    }
-    
+@router.put("/country/{id}",status_code=status.HTTP_200_OK)
+async def update_data(request:CountrySchema.MtrCountryRequest,id:int,db:Session=Depends(get_db)):
+    update_data = CountryCRUD.update_country(db,id,request)
+    return CountrySchema.MtrCountryResponse(status_code=200,msg_status="success",data=update_data)

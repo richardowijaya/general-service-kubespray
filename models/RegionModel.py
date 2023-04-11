@@ -10,6 +10,6 @@ class MtrRegion(Base):
     regional_name = Column(String(35),nullable=True)
     user_id = Column(Integer,nullable=False) #relation with user table on user service
 
-    #regions = relationship("MtrCompany",backref="mtr_region")
+    area = relationship("MtrArea",back_populates="region",cascade="all,delete",passive_deletes=True)
 
 MtrRegion.metadata.create_all(bind=engine)

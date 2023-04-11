@@ -5,7 +5,7 @@ from configs.database import Base,engine
 class MtrTermOfPayment(Base):
     __tablename__ = "mtr_term_of_payment"
     is_active = Column(Boolean,nullable=False,default=True)
-    term_of_payment_id = Column(Integer,nullable=False,primary_key=True,autoincrement=True)
+    term_of_payment_id = Column(Integer,primary_key=True)
     term_of_payment_code = Column(String(5),nullable=False,unique=True)
     term_of_payment_installment = Column(Integer,nullable=True,default=0)
     term_of_payment_interval = Column(Integer,nullable=True,default=0)

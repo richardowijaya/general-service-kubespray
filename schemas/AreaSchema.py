@@ -17,9 +17,9 @@ class MtrAreaRequest(BaseModel):
     region_id:int
 
 class MtrAreaResponses(BaseModel):
-    status:str
-    results:int
-    payloads:List[MtrAreaSchema] 
+    status_code:int
+    msg_status:str
+    data:List[MtrAreaSchema]
 
 class MtrAreaResponse(BaseModel):
     status_code:int
