@@ -15,11 +15,10 @@ def post_new_area(db:Session,area:AreaSchema.MtrAreaSchema):
     _area = AreaModel.MtrArea()
     _area.area_code = area.area_code
     _area.description = area.description
-    _area.region_id = area.region_id
+    _area.regional_id = area.regional_id
     db.add(_area)
     db.commit()
     db.refresh(_area)
-    print(_area)
     return _area
 
 #delete data by primary_key(ID)
@@ -37,7 +36,7 @@ def update_area(db:Session,update_id:int,area:AreaSchema.MtrAreaSchema):
     _area = get_area_by_id(db,update_id)
     _area.area_code = area.area_code
     _area.description = area.description
-    _area.region_id = area.region_id
+    _area.regional_id = area.regional_id
     db.commit()
     db.refresh(_area)
     return _area

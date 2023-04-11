@@ -1,6 +1,6 @@
 from fastapi import APIRouter,Depends,HTTPException,status
 from cruds import AdjustmentReasonCRUD
-from models import CommonModel
+from models import AdjustmentReasonModel
 from schemas import CommonSchema
 from sqlalchemy.orm import Session
 from configs.database import get_db
@@ -27,7 +27,7 @@ def get_adjustment_reason(adjustment_reason_id, db:Session=Depends(get_db)):
     }
 
 @router.post("/create-adjustment-reason", status_code=201)
-def post_adjustment_reason(payload:CommonSchema.MtrAdjustmentReasonGetSchema,db:Session=Depends(get_db)):
+def post_adjustment_reason(payload:CommonSchema.MtrAdjustmentReasonSchema,db:Session=Depends(get_db)):
     new_adjustment_reason = AdjustmentReasonCRUD.post_adjustment_reasons_cruds(db, payload)
     db.add(new_adjustment_reason)
     db.commit()
@@ -47,7 +47,7 @@ def delete_adjustment_reason(adjustment_reason_id, db:Session=Depends(get_db)):
     }
 
 @router.put("/update-adjustment-reason/{adjustment_reason_id}", status_code=202)
-def put_adjustment_reason(payload:CommonSchema.MtrAdjustmentReasonUpdateSchema, adjustment_reason_id,db:Session=Depends(get_db)):
+def put_adjustment_reason(payload:CommonSchema.MtrAdjustmentReasonSchema, adjustment_reason_id,db:Session=Depends(get_db)):
     update_adjustment_reason, update_data_new  = AdjustmentReasonCRUD.put_adjustment_reason_cruds(db,payload, adjustment_reason_id)
     if not update_adjustment_reason:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="data not found")
