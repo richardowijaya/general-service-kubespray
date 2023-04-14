@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,HTTPException,status
 from cruds import AdjustmentReasonCRUD
 from models import AfterSalesArea
-from schemas import CommonSchema
+from schemas import AfterSalesAreaSchema
 from sqlalchemy.orm import Session
 from configs.database import get_db
 
@@ -19,8 +19,8 @@ def get_aftersales_areas(db:Session=Depends(get_db)):
     }
 
 @router.post("/aftersales-area")
-def post_after_sales_area(payload:CommonSchema.MtrAftersalesAreaSchema,db:Session=Depends(get_db)):
-    new_data = AfterSalesArea.MtrAftersalesArea(**payload.dict())
+def post_after_sales_area(payload:AfterSalesAreaSchema.MtrAftersalesAreaSchema,db:Session=Depends(get_db)):
+    new_data = AfterSalesAreaSchema.MtrAftersalesArea(**payload.dict())
     db.add(new_data)
     db.commit()
     db.refresh(new_data)

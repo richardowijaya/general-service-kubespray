@@ -11,5 +11,3 @@ class MtrProvince(Base):
     country_id = Column(Integer,ForeignKey("mtr_country.country_id",ondelete="CASCADE"))
 
     country = relationship("MtrCountry",back_populates="province")
-
-MtrProvince.metadata.create_all(bind=engine)

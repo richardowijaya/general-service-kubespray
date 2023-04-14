@@ -4,7 +4,7 @@ from schemas import CountrySchema
 
 #get all data
 def get_country_all(db:Session,skip:int=0,limit:int=100):
-    return db.query(CountryModel.MtrCountry).offset(skip).limit(limit).all()
+    return db.query(CountryModel.MtrCountry).order_by(CountryModel.MtrCountry.country_id).offset(skip).limit(limit).all()
 
 #get data by filtering the primary_key(ID)
 def get_country_by_id(db:Session,get_id:int):

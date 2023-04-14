@@ -10,5 +10,3 @@ class MtrTaxOutTransaction(Base):
     tax_out_transaction_name = Column(String(256),nullable=True,default="")
 
     #tax_out_transactions = relationship("MtrCompany",backref="mtr_tax_out_transaction")
-
-MtrTaxOutTransaction.metadata.create_all(bind=engine)

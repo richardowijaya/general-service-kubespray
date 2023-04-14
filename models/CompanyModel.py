@@ -12,9 +12,9 @@ class MtrCompany(Base):
     company_abbreviation = Column(String(15),nullable=False,default="")
     #company_office_address_id = Column(Integer,ForeignKey("mtr_address.address.id"))
     company_phone_number = Column(String(30),nullable=True,default="")
-    company_fax_number = Column(String(30,nullable=True,default=""))
+    company_fax_number = Column(String(30),nullable=True,default="")
     company_email = Column(String(128),nullable=True,default="")
-    vat_same_company_id = Column(Integer(5),nullable=True,default=0)
+    vat_same_company_id = Column(Integer,nullable=True)
     vat_npwp_no = Column(String(35),nullable=False)
     vat_npwp_date = Column(DateTime,nullable=False)
     #vat_tax_out_transaction_id = Column(Integer,ForeignKey("mtr_tax_out_transaction.tax_out_transaction_id"))
@@ -33,7 +33,7 @@ class MtrCompany(Base):
     tax_pkp_no = Column(String(30),nullable=True,default="")
     tax_pkp_date = Column(DateTime,nullable=True,default="")
     #tax_kpp_id = Column(Integer,ForeignKey("mtr_kpp.kpp_id"))
-    #regional_id = Column(Integer,ForeignKey("mtr_region.regional_id"))
+    #region_id = Column(Integer,ForeignKey("mtr_region.region_id"))
     #finance_area_id = Column(Integer,ForeignKey("mtr_finance_area.finance_area_id"))
     #area_id = Column(Integer,ForeignKey("mtr_area.area_id"))
     #incentive_group_id = Column(Integer,ForeignKey("mtr_incentive_group.incentive_group_id"))
@@ -46,5 +46,3 @@ class MtrCompany(Base):
     is_distributor = Column(Boolean,nullable=True,default=False)
 
     #area = relationship("MtrArea",back_populates="mtr_company")
-
-MtrCompany.metadata.create_all(bind=engine)

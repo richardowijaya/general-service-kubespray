@@ -10,5 +10,3 @@ class MtrIncentiveGroup(Base):
     incentive_group_name = Column(String(100),nullable=False)
 
     #incentives = relationship("MtrCompany",backref="mtr_incentive_group")
-
-MtrIncentiveGroup.metadata.create_all(bind=engine)

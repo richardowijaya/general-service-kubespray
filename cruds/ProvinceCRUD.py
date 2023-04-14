@@ -4,7 +4,7 @@ from schemas import ProvinceSchema
 
 #get all data
 def get_province_all(db:Session,skip:int=0,limit:int=100):
-    return db.query(ProvinceModel.MtrProvince).offset(skip).limit(limit).all()
+    return db.query(ProvinceModel.MtrProvince).order_by(ProvinceModel.MtrProvince.country_id).offset(skip).limit(limit).all()
 
 #get data by filtering the primary_key(ID)
 def get_province_by_id(db:Session,get_id:int):

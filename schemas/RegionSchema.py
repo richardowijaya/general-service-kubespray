@@ -3,17 +3,17 @@ from pydantic import BaseModel
 
 class MtrRegionSchema(BaseModel):
     is_active:Optional[bool]=None
-    regional_id:Optional[int]=None
-    regional_code:str
-    regional_name:str
+    region_id:Optional[int]=None
+    region_code:str
+    region_name:str
     user_id:int
 
     class Config:
         orm_mode = True
 
 class MtrRegionRequest(BaseModel):
-    regional_code:str
-    regional_name:str
+    region_code:str
+    region_name:str
     user_id:int
 
 class MtrRegionResponses(BaseModel):

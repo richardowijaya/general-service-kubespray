@@ -13,5 +13,3 @@ class MtrCountry(Base):
     currency_id = Column(Integer,nullable=False) #relation with mtr_currency in finance module
 
     province = relationship("MtrProvince",back_populates="country",cascade="all,delete",passive_deletes=True)
-
-MtrCountry.metadata.create_all(bind=engine)

@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Identity,Integer,Boolean,String
-from sqlalchemy.orm import relationship
-from configs.database import Base,engine
+from configs.database import Base
 
 class MtrAdjustmentReason(Base):
     __tablename__ = 'mtr_adjustment_reason'
@@ -9,5 +8,3 @@ class MtrAdjustmentReason(Base):
     adjustment_reason_id = Column(Integer, Identity(start=1, increment=1), primary_key=True)
     adjustment_reason_code = Column(String(20),nullable=False, unique=True)
     adjustment_reason_name = Column(String(256), nullable=False)
-
-MtrAdjustmentReason.metadata.create_all(bind=engine)
