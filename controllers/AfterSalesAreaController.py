@@ -1,15 +1,14 @@
 from fastapi import APIRouter,Depends,HTTPException,status
-from cruds import AdjustmentReasonCRUD
-from models import AfterSalesArea
+from cruds import AfterSalesAreaCRUD
 from schemas import AfterSalesAreaSchema
 from sqlalchemy.orm import Session
 from configs.database import get_db
 
-router = APIRouter(tags=["Common"],prefix="/api/general")
+router = APIRouter(tags=["After Sales Area"],prefix="/api/general")
 
 @router.get("/aftersales-areas")
 def get_aftersales_areas(db:Session=Depends(get_db)):
-    items = AdjustmentReasonCRUD.get_aftersales_area_cruds(db)
+    items = AfterSalesAreaCRUD.get_aftersales_area_cruds(db)
     if not items:
         raise HTTPException(status_code=status.HTTP_204_NO_CONTENT,detail="data not found")
     return {
@@ -20,7 +19,7 @@ def get_aftersales_areas(db:Session=Depends(get_db)):
 
 @router.post("/aftersales-area")
 def post_after_sales_area(payload:AfterSalesAreaSchema.MtrAftersalesAreaSchema,db:Session=Depends(get_db)):
-    new_data = AfterSalesAreaSchema.MtrAftersalesArea(**payload.dict())
+    new_data = AfterSalesAreaCRUD.post_aftersales_area_cruds(**payload.dict())
     db.add(new_data)
     db.commit()
     db.refresh(new_data)

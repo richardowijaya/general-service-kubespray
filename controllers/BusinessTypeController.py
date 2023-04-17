@@ -1,0 +1,58 @@
+from fastapi import APIRouter,Depends,HTTPException,status
+from cruds import BusinessTypeCRUD
+from exceptions.RequestException import ResponseException
+from schemas import BusinessTypeSchema
+from sqlalchemy.orm import Session
+from configs.database import get_db
+from payloads import CommonResponse
+
+router = APIRouter(tags=["Business Type"],prefix="/api/general")
+
+@router.get("/get-business-types", status_code=200)
+def get_business_types(db:Session=Depends(get_db)):
+    business_typess = BusinessTypeCRUD.get_business_types_cruds(db,0,100)
+    if not business_typess:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
+    return CommonResponse.payloads(ResponseException(200),business_typess)
+
+@router.get("/get-business-type/{business_type_id}", status_code=200)
+def get_business_type(business_type_id, db:Session=Depends(get_db)):
+    business_type = BusinessTypeCRUD.get_business_type_cruds(db, business_type_id)
+    if not business_type:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
+    return CommonResponse.payload(ResponseException(200),business_type)
+
+@router.post("/create-business-type", status_code=201)
+def post_business_type(payload:BusinessTypeSchema.MtrBusinessTypeGetSchema,db:Session=Depends(get_db)):
+    new_business_type = BusinessTypeCRUD.post_business_type_cruds(db, payload)
+    db.add(new_business_type)
+    db.commit()
+    db.refresh(new_business_type)
+    return CommonResponse.payload(ResponseException(201), new_business_type)
+
+@router.delete("/delete-business-type/{business_type_id}", status_code=202)
+def delete_business_type(business_type_id, db:Session=Depends(get_db)):
+    erase_business_type = BusinessTypeCRUD.delete_business_type_cruds(db,business_type_id)
+    if not erase_business_type:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
+    db.commit()
+    return CommonResponse.payload(ResponseException(202), erase_business_type)
+
+@router.put("/update-business-type/{business_type_id}", status_code=202)
+def put_business_type(payload:BusinessTypeSchema.MtrBusinessTypeGetSchema, business_type_id,db:Session=Depends(get_db)):
+    update_business_type, update_data_new  = BusinessTypeCRUD.put_business_type_cruds(db,payload, business_type_id)
+    if not update_business_type:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
+    db.commit()
+    db.refresh(update_data_new)
+    return CommonResponse.payload(ResponseException(200), update_data_new)
+
+@router.patch("/active-business-type/{business_type_id}", status_code=202)
+def patch_business_type(business_type_id,db:Session=Depends(get_db)):
+    active_business_type  = BusinessTypeCRUD.patch_business_type_cruds(db, business_type_id)
+    if not active_business_type:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
+    active_business_type.is_active = not active_business_type.is_active
+    db.commit()
+    db.refresh(active_business_type)
+    return CommonResponse.payload(ResponseException(200), active_business_type.is_active)
