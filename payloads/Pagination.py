@@ -7,3 +7,6 @@ class PaginationSchema(BaseModel):
     total_rows:int
     total_pages:int
     rows:list = []
+
+    class Config:
+        orm_mode = True
