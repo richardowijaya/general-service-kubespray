@@ -3,6 +3,7 @@ from cruds import VoidTransactionCRUD
 from exceptions.RequestException import ResponseException
 from schemas import VoidTransactionSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_void_transaction(void_transaction_id, db:Session=Depends(get_db)):
 
 @router.post("/create-void-transaction", status_code=201)
 def post_void_transaction(payload:VoidTransactionSchema.MtrVoidTransactionGetSchema,db:Session=Depends(get_db)):
-    new_void_transaction = VoidTransactionCRUD.post_void_transaction_cruds(db, payload)
-    db.add(new_void_transaction)
-    db.commit()
+    try :
+        new_void_transaction = VoidTransactionCRUD.post_void_transaction_cruds(db, payload)
+        db.add(new_void_transaction)
+        db.commit()
+    except IntegrityError :
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_void_transaction)
     return CommonResponse.payload(ResponseException(201), new_void_transaction)
 
@@ -34,6 +39,7 @@ def post_void_transaction(payload:VoidTransactionSchema.MtrVoidTransactionGetSch
 def delete_void_transaction(void_transaction_id, db:Session=Depends(get_db)):
     erase_void_transaction = VoidTransactionCRUD.delete_void_transaction_cruds(db,void_transaction_id)
     if not erase_void_transaction:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_void_transaction)
@@ -42,6 +48,7 @@ def delete_void_transaction(void_transaction_id, db:Session=Depends(get_db)):
 def put_void_transaction(payload:VoidTransactionSchema.MtrVoidTransactionGetSchema, void_transaction_id,db:Session=Depends(get_db)):
     update_void_transaction, update_data_new  = VoidTransactionCRUD.put_void_transaction_cruds(db,payload, void_transaction_id)
     if not update_void_transaction:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_void_transaction(payload:VoidTransactionSchema.MtrVoidTransactionGetSche
 def patch_void_transaction(void_transaction_id,db:Session=Depends(get_db)):
     active_void_transaction  = VoidTransactionCRUD.patch_void_transaction_cruds(db, void_transaction_id)
     if not active_void_transaction:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_void_transaction.is_active = not active_void_transaction.is_active
     db.commit()

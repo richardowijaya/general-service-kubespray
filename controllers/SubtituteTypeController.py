@@ -3,6 +3,7 @@ from cruds import SubstituteTypeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import SubstituteTypeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_substitue_type(substitue_type_id, db:Session=Depends(get_db)):
 
 @router.post("/create-substitue-type", status_code=201)
 def post_substitue_type(payload:SubstituteTypeSchema.MtrSubstituteTypeGetSchema,db:Session=Depends(get_db)):
-    new_substitue_type = SubstituteTypeCRUD.post_substitue_type_cruds(db, payload)
-    db.add(new_substitue_type)
-    db.commit()
+    try :
+        new_substitue_type = SubstituteTypeCRUD.post_substitue_type_cruds(db, payload)
+        db.add(new_substitue_type)
+        db.commit()
+    except IntegrityError :
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_substitue_type)
     return CommonResponse.payload(ResponseException(201), new_substitue_type)
 
@@ -34,6 +39,7 @@ def post_substitue_type(payload:SubstituteTypeSchema.MtrSubstituteTypeGetSchema,
 def delete_substitue_type(substitue_type_id, db:Session=Depends(get_db)):
     erase_substitue_type = SubstituteTypeCRUD.delete_substitue_type_cruds(db,substitue_type_id)
     if not erase_substitue_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_substitue_type)
@@ -42,6 +48,7 @@ def delete_substitue_type(substitue_type_id, db:Session=Depends(get_db)):
 def put_substitue_type(payload:SubstituteTypeSchema.MtrSubstituteTypeGetSchema, substitue_type_id,db:Session=Depends(get_db)):
     update_substitue_type, update_data_new  = SubstituteTypeCRUD.put_substitue_type_cruds(db,payload, substitue_type_id)
     if not update_substitue_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_substitue_type(payload:SubstituteTypeSchema.MtrSubstituteTypeGetSchema, 
 def patch_substitue_type(substitue_type_id,db:Session=Depends(get_db)):
     active_substitue_type  = SubstituteTypeCRUD.patch_substitue_type_cruds(db, substitue_type_id)
     if not active_substitue_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_substitue_type.is_active = not active_substitue_type.is_active
     db.commit()

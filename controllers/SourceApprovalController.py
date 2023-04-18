@@ -3,6 +3,7 @@ from cruds import SourceApprovalDocumentCRUD
 from exceptions.RequestException import ResponseException
 from schemas import SourceApprovalDocumentSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_source_approval_document(source_approval_document_id, db:Session=Depends
 
 @router.post("/create-source-approval-document", status_code=201)
 def post_source_approval_document(payload:SourceApprovalDocumentSchema.MtrSourceApprovalDocumentGetSchema,db:Session=Depends(get_db)):
-    new_source_approval_document = SourceApprovalDocumentCRUD.post_source_approval_document_cruds(db, payload)
-    db.add(new_source_approval_document)
-    db.commit()
+    try:
+        new_source_approval_document = SourceApprovalDocumentCRUD.post_source_approval_document_cruds(db, payload)
+        db.add(new_source_approval_document)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_source_approval_document)
     return CommonResponse.payload(ResponseException(201), new_source_approval_document)
 
@@ -34,6 +39,7 @@ def post_source_approval_document(payload:SourceApprovalDocumentSchema.MtrSource
 def delete_source_approval_document(source_approval_document_id, db:Session=Depends(get_db)):
     erase_source_approval_document = SourceApprovalDocumentCRUD.delete_source_approval_document_cruds(db,source_approval_document_id)
     if not erase_source_approval_document:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_source_approval_document)
@@ -42,6 +48,7 @@ def delete_source_approval_document(source_approval_document_id, db:Session=Depe
 def put_source_approval_document(payload:SourceApprovalDocumentSchema.MtrSourceApprovalDocumentGetSchema, source_approval_document_id,db:Session=Depends(get_db)):
     update_source_approval_document, update_data_new  = SourceApprovalDocumentCRUD.put_source_approval_document_cruds(db,payload, source_approval_document_id)
     if not update_source_approval_document:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_source_approval_document(payload:SourceApprovalDocumentSchema.MtrSourceA
 def patch_source_approval_document(source_approval_document_id,db:Session=Depends(get_db)):
     active_source_approval_document  = SourceApprovalDocumentCRUD.patch_source_approval_document_cruds(db, source_approval_document_id)
     if not active_source_approval_document:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_source_approval_document.is_active = not active_source_approval_document.is_active
     db.commit()

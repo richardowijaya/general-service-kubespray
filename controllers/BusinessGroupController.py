@@ -3,6 +3,7 @@ from cruds import BusinessGroupCRUD
 from exceptions.RequestException import ResponseException
 from schemas import BusinessGroupSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_business_group(business_group_id, db:Session=Depends(get_db)):
 
 @router.post("/create-business-group", status_code=201)
 def post_business_group(payload:BusinessGroupSchema.MtrBusinessGroupGetSchema,db:Session=Depends(get_db)):
-    new_business_group = BusinessGroupCRUD.post_business_group_cruds(db, payload)
-    db.add(new_business_group)
-    db.commit()
+    try:
+        new_business_group = BusinessGroupCRUD.post_business_group_cruds(db, payload)
+        db.add(new_business_group)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_business_group)
     return CommonResponse.payload(ResponseException(201), new_business_group)
 
@@ -34,6 +39,7 @@ def post_business_group(payload:BusinessGroupSchema.MtrBusinessGroupGetSchema,db
 def delete_business_group(business_group_id, db:Session=Depends(get_db)):
     erase_business_group = BusinessGroupCRUD.delete_business_group_cruds(db,business_group_id)
     if not erase_business_group:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_business_group)
@@ -42,6 +48,7 @@ def delete_business_group(business_group_id, db:Session=Depends(get_db)):
 def put_business_group(payload:BusinessGroupSchema.MtrBusinessGroupGetSchema, business_group_id,db:Session=Depends(get_db)):
     update_business_group, update_data_new  = BusinessGroupCRUD.put_business_group_cruds(db,payload, business_group_id)
     if not update_business_group:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_business_group(payload:BusinessGroupSchema.MtrBusinessGroupGetSchema, bu
 def patch_business_group(business_group_id,db:Session=Depends(get_db)):
     active_business_group  = BusinessGroupCRUD.patch_business_group_cruds(db, business_group_id)
     if not active_business_group:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_business_group.is_active = not active_business_group.is_active
     db.commit()

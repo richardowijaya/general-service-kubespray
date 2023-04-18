@@ -3,6 +3,7 @@ from cruds import TaxFormatTypeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import TaxFormatTypeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_tax_format_type(tax_format_type_id, db:Session=Depends(get_db)):
 
 @router.post("/create-tax-format-type", status_code=201)
 def post_tax_format_type(payload:TaxFormatTypeSchema.MtrTaxFormatTypeGetSchema,db:Session=Depends(get_db)):
-    new_tax_format_type = TaxFormatTypeCRUD.post_tax_format_type_cruds(db, payload)
-    db.add(new_tax_format_type)
-    db.commit()
+    try :
+        new_tax_format_type = TaxFormatTypeCRUD.post_tax_format_type_cruds(db, payload)
+        db.add(new_tax_format_type)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_tax_format_type)
     return CommonResponse.payload(ResponseException(201), new_tax_format_type)
 
@@ -34,6 +39,7 @@ def post_tax_format_type(payload:TaxFormatTypeSchema.MtrTaxFormatTypeGetSchema,d
 def delete_tax_format_type(tax_format_type_id, db:Session=Depends(get_db)):
     erase_tax_format_type = TaxFormatTypeCRUD.delete_tax_format_type_cruds(db,tax_format_type_id)
     if not erase_tax_format_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_tax_format_type)
@@ -42,6 +48,7 @@ def delete_tax_format_type(tax_format_type_id, db:Session=Depends(get_db)):
 def put_tax_format_type(payload:TaxFormatTypeSchema.MtrTaxFormatTypeGetSchema, tax_format_type_id,db:Session=Depends(get_db)):
     update_tax_format_type, update_data_new  = TaxFormatTypeCRUD.put_tax_format_type_cruds(db,payload, tax_format_type_id)
     if not update_tax_format_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_tax_format_type(payload:TaxFormatTypeSchema.MtrTaxFormatTypeGetSchema, t
 def patch_tax_format_type(tax_format_type_id,db:Session=Depends(get_db)):
     active_tax_format_type  = TaxFormatTypeCRUD.patch_tax_format_type_cruds(db, tax_format_type_id)
     if not active_tax_format_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_tax_format_type.is_active = not active_tax_format_type.is_active
     db.commit()

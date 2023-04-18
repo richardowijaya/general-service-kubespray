@@ -3,6 +3,7 @@ from cruds import PriceListCodeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import PriceListCodeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_price_list_code(price_list_code_id = None, db:Session=Depends(get_db)):
 
 @router.post("/create-price-list-code", status_code=201)
 def post_price_list_code(payload:PriceListCodeSchema.MtrPriceListCodeGetSchema,db:Session=Depends(get_db)):
-    new_price_list_code = PriceListCodeCRUD.post_price_list_code_cruds(db, payload)
-    db.add(new_price_list_code)
-    db.commit()
+    try:
+        new_price_list_code = PriceListCodeCRUD.post_price_list_code_cruds(db, payload)
+        db.add(new_price_list_code)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_price_list_code)
     return CommonResponse.payload(ResponseException(201), new_price_list_code)
 
@@ -34,6 +39,7 @@ def post_price_list_code(payload:PriceListCodeSchema.MtrPriceListCodeGetSchema,d
 def delete_price_list_code(price_list_code_id, db:Session=Depends(get_db)):
     erase_price_list_code = PriceListCodeCRUD.delete_price_list_code_cruds(db,price_list_code_id)
     if not erase_price_list_code:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_price_list_code)
@@ -42,6 +48,7 @@ def delete_price_list_code(price_list_code_id, db:Session=Depends(get_db)):
 def put_price_list_code(payload:PriceListCodeSchema.MtrPriceListCodeGetSchema, price_list_code_id,db:Session=Depends(get_db)):
     update_price_list_code, update_data_new  = PriceListCodeCRUD.put_price_list_code_cruds(db,payload, price_list_code_id)
     if not update_price_list_code:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_price_list_code(payload:PriceListCodeSchema.MtrPriceListCodeGetSchema, p
 def patch_price_list_code(price_list_code_id,db:Session=Depends(get_db)):
     active_price_list_code  = PriceListCodeCRUD.patch_price_list_code_cruds(db, price_list_code_id)
     if not active_price_list_code:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_price_list_code.is_active = not active_price_list_code.is_active
     db.commit()

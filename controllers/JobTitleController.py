@@ -3,6 +3,7 @@ from cruds import JobTitleCRUD
 from exceptions.RequestException import ResponseException
 from schemas import JobTitleSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -25,8 +26,12 @@ def get_job_title(job_title_id, db:Session=Depends(get_db)):
 @router.post("/create-job-title", status_code=201)
 def post_job_title(payload:JobTitleSchema.MtrJobTitleGetSchema,db:Session=Depends(get_db)):
     new_job_title = JobTitleCRUD.post_job_title_cruds(db, payload)
-    db.add(new_job_title)
-    db.commit()
+    try:
+        db.add(new_job_title)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_job_title)
     return CommonResponse.payload(ResponseException(201), new_job_title)
 
@@ -34,6 +39,7 @@ def post_job_title(payload:JobTitleSchema.MtrJobTitleGetSchema,db:Session=Depend
 def delete_job_title(job_title_id, db:Session=Depends(get_db)):
     erase_job_title = JobTitleCRUD.delete_job_title_cruds(db,job_title_id)
     if not erase_job_title:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_job_title)
@@ -42,6 +48,7 @@ def delete_job_title(job_title_id, db:Session=Depends(get_db)):
 def put_job_title(payload:JobTitleSchema.MtrJobTitleGetSchema, job_title_id,db:Session=Depends(get_db)):
     update_job_title, update_data_new  = JobTitleCRUD.put_job_title_cruds(db,payload, job_title_id)
     if not update_job_title:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_job_title(payload:JobTitleSchema.MtrJobTitleGetSchema, job_title_id,db:S
 def patch_job_title(job_title_id,db:Session=Depends(get_db)):
     active_job_title  = JobTitleCRUD.patch_job_title_cruds(db, job_title_id)
     if not active_job_title:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_job_title.is_active = not active_job_title.is_active
     db.commit()

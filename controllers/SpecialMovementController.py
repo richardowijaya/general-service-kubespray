@@ -3,6 +3,7 @@ from cruds import SpecialMovementCRUD
 from exceptions.RequestException import ResponseException
 from schemas import SpecialMovementSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_special_movement(special_movement_id, db:Session=Depends(get_db)):
 
 @router.post("/create-special-movement", status_code=201)
 def post_special_movement(payload:SpecialMovementSchema.MtrSpecialMovementGetSchema,db:Session=Depends(get_db)):
-    new_special_movement = SpecialMovementCRUD.post_special_movement_cruds(db, payload)
-    db.add(new_special_movement)
-    db.commit()
+    try:
+        new_special_movement = SpecialMovementCRUD.post_special_movement_cruds(db, payload)
+        db.add(new_special_movement)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_special_movement)
     return CommonResponse.payload(ResponseException(201), new_special_movement)
 
@@ -34,6 +39,7 @@ def post_special_movement(payload:SpecialMovementSchema.MtrSpecialMovementGetSch
 def delete_special_movement(special_movement_id, db:Session=Depends(get_db)):
     erase_special_movement = SpecialMovementCRUD.delete_special_movement_cruds(db,special_movement_id)
     if not erase_special_movement:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_special_movement)
@@ -42,6 +48,7 @@ def delete_special_movement(special_movement_id, db:Session=Depends(get_db)):
 def put_special_movement(payload:SpecialMovementSchema.MtrSpecialMovementGetSchema, special_movement_id,db:Session=Depends(get_db)):
     update_special_movement, update_data_new  = SpecialMovementCRUD.put_special_movement_cruds(db,payload, special_movement_id)
     if not update_special_movement:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_special_movement(payload:SpecialMovementSchema.MtrSpecialMovementGetSche
 def patch_special_movement(special_movement_id,db:Session=Depends(get_db)):
     active_special_movement  = SpecialMovementCRUD.patch_special_movement_cruds(db, special_movement_id)
     if not active_special_movement:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_special_movement.is_active = not active_special_movement.is_active
     db.commit()

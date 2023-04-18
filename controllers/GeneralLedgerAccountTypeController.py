@@ -3,6 +3,7 @@ from cruds import GeneralLedgerAccountTypeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import GeneralLedgerAccountTypeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_general_ledger_account_type(general_ledger_account_type_id, db:Session=D
 
 @router.post("/create-general-ledger-account-type", status_code=201)
 def post_general_ledger_account_type(payload:GeneralLedgerAccountTypeSchema.MtrGeneralLedgerAccountTypeGetSchema,db:Session=Depends(get_db)):
-    new_general_ledger_account_type = GeneralLedgerAccountTypeCRUD.post_general_ledger_account_type_cruds(db, payload)
-    db.add(new_general_ledger_account_type)
-    db.commit()
+    try:
+        new_general_ledger_account_type = GeneralLedgerAccountTypeCRUD.post_general_ledger_account_type_cruds(db, payload)
+        db.add(new_general_ledger_account_type)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_general_ledger_account_type)
     return CommonResponse.payload(ResponseException(201), new_general_ledger_account_type)
 
@@ -34,6 +39,7 @@ def post_general_ledger_account_type(payload:GeneralLedgerAccountTypeSchema.MtrG
 def delete_general_ledger_account_type(general_ledger_account_type_id, db:Session=Depends(get_db)):
     erase_general_ledger_account_type = GeneralLedgerAccountTypeCRUD.delete_general_ledger_account_type_cruds(db,general_ledger_account_type_id)
     if not erase_general_ledger_account_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_general_ledger_account_type)
@@ -42,6 +48,7 @@ def delete_general_ledger_account_type(general_ledger_account_type_id, db:Sessio
 def put_general_ledger_account_type(payload:GeneralLedgerAccountTypeSchema.MtrGeneralLedgerAccountTypeGetSchema, general_ledger_account_type_id,db:Session=Depends(get_db)):
     update_general_ledger_account_type, update_data_new  = GeneralLedgerAccountTypeCRUD.put_general_ledger_account_type_cruds(db,payload, general_ledger_account_type_id)
     if not update_general_ledger_account_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_general_ledger_account_type(payload:GeneralLedgerAccountTypeSchema.MtrGe
 def patch_general_ledger_account_type(general_ledger_account_type_id,db:Session=Depends(get_db)):
     active_general_ledger_account_type  = GeneralLedgerAccountTypeCRUD.patch_general_ledger_account_type_cruds(db, general_ledger_account_type_id)
     if not active_general_ledger_account_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_general_ledger_account_type.is_active = not active_general_ledger_account_type.is_active
     db.commit()

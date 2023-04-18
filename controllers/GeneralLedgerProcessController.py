@@ -3,6 +3,7 @@ from cruds import GeneralLedgerProcessCRUD
 from exceptions.RequestException import ResponseException
 from schemas import GeneralLedgerProcessSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,12 @@ def get_general_ledger_process(general_ledger_process_id, db:Session=Depends(get
 
 @router.post("/create-general-ledger-process", status_code=201)
 def post_general_ledger_process(payload:GeneralLedgerProcessSchema.MtrGeneralLedgerProcessGetSchema,db:Session=Depends(get_db)):
-    new_general_ledger_process = GeneralLedgerProcessCRUD.post_general_ledger_process_cruds(db, payload)
-    db.add(new_general_ledger_process)
-    db.commit()
+    try:
+        new_general_ledger_process = GeneralLedgerProcessCRUD.post_general_ledger_process_cruds(db, payload)
+        db.add(new_general_ledger_process)
+        db.commit()
+    except IntegrityError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_general_ledger_process)
     return CommonResponse.payload(ResponseException(201), new_general_ledger_process)
 
@@ -34,6 +38,7 @@ def post_general_ledger_process(payload:GeneralLedgerProcessSchema.MtrGeneralLed
 def delete_general_ledger_process(general_ledger_process_id, db:Session=Depends(get_db)):
     erase_general_ledger_process = GeneralLedgerProcessCRUD.delete_general_ledger_process_cruds(db,general_ledger_process_id)
     if not erase_general_ledger_process:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_general_ledger_process)
@@ -42,6 +47,7 @@ def delete_general_ledger_process(general_ledger_process_id, db:Session=Depends(
 def put_general_ledger_process(payload:GeneralLedgerProcessSchema.MtrGeneralLedgerProcessGetSchema, general_ledger_process_id,db:Session=Depends(get_db)):
     update_general_ledger_process, update_data_new  = GeneralLedgerProcessCRUD.put_general_ledger_process_cruds(db,payload, general_ledger_process_id)
     if not update_general_ledger_process:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +57,7 @@ def put_general_ledger_process(payload:GeneralLedgerProcessSchema.MtrGeneralLedg
 def patch_general_ledger_process(general_ledger_process_id,db:Session=Depends(get_db)):
     active_general_ledger_process  = GeneralLedgerProcessCRUD.patch_general_ledger_process_cruds(db, general_ledger_process_id)
     if not active_general_ledger_process:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_general_ledger_process.is_active = not active_general_ledger_process.is_active
     db.commit()

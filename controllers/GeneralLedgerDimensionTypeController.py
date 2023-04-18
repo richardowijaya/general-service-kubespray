@@ -3,6 +3,7 @@ from cruds import GeneralLedgerDimensionTypeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import GeneralLedgerDimensionTypeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_general_ledger_dimension_type(general_ledger_dimension_type_id, db:Sessi
 
 @router.post("/create-general-ledger-dimension-type", status_code=201)
 def post_general_ledger_dimension_type(payload:GeneralLedgerDimensionTypeSchema.MtrGeneralLedgerDimensionTypeGetSchema,db:Session=Depends(get_db)):
-    new_general_ledger_dimension_type = GeneralLedgerDimensionTypeCRUD.post_general_ledger_dimension_type_cruds(db, payload)
-    db.add(new_general_ledger_dimension_type)
-    db.commit()
+    try :
+        new_general_ledger_dimension_type = GeneralLedgerDimensionTypeCRUD.post_general_ledger_dimension_type_cruds(db, payload)
+        db.add(new_general_ledger_dimension_type)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_general_ledger_dimension_type)
     return CommonResponse.payload(ResponseException(201), new_general_ledger_dimension_type)
 
@@ -34,6 +39,7 @@ def post_general_ledger_dimension_type(payload:GeneralLedgerDimensionTypeSchema.
 def delete_general_ledger_dimension_type(general_ledger_dimension_type_id, db:Session=Depends(get_db)):
     erase_general_ledger_dimension_type = GeneralLedgerDimensionTypeCRUD.delete_general_ledger_dimension_type_cruds(db,general_ledger_dimension_type_id)
     if not erase_general_ledger_dimension_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_general_ledger_dimension_type)
@@ -42,6 +48,7 @@ def delete_general_ledger_dimension_type(general_ledger_dimension_type_id, db:Se
 def put_general_ledger_dimension_type(payload:GeneralLedgerDimensionTypeSchema.MtrGeneralLedgerDimensionTypeGetSchema, general_ledger_dimension_type_id,db:Session=Depends(get_db)):
     update_general_ledger_dimension_type, update_data_new  = GeneralLedgerDimensionTypeCRUD.put_general_ledger_dimension_type_cruds(db,payload, general_ledger_dimension_type_id)
     if not update_general_ledger_dimension_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_general_ledger_dimension_type(payload:GeneralLedgerDimensionTypeSchema.M
 def patch_general_ledger_dimension_type(general_ledger_dimension_type_id,db:Session=Depends(get_db)):
     active_general_ledger_dimension_type  = GeneralLedgerDimensionTypeCRUD.patch_general_ledger_dimension_type_cruds(db, general_ledger_dimension_type_id)
     if not active_general_ledger_dimension_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_general_ledger_dimension_type.is_active = not active_general_ledger_dimension_type.is_active
     db.commit()

@@ -3,6 +3,7 @@ from cruds import UnitOfMeasurementItemCRUD
 from exceptions.RequestException import ResponseException
 from schemas import UnitOfMeasurementItemSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_unit_of_measurement_item(unit_of_measurement_item_id, db:Session=Depends
 
 @router.post("/create-unit-of-measurement-item", status_code=201)
 def post_unit_of_measurement_item(payload:UnitOfMeasurementItemSchema.MtrUnitOfMeasurementItemGetSchema,db:Session=Depends(get_db)):
-    new_unit_of_measurement_item = UnitOfMeasurementItemCRUD.post_unit_of_measurement_item_cruds(db, payload)
-    db.add(new_unit_of_measurement_item)
-    db.commit()
+    try:
+        new_unit_of_measurement_item = UnitOfMeasurementItemCRUD.post_unit_of_measurement_item_cruds(db, payload)
+        db.add(new_unit_of_measurement_item)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_unit_of_measurement_item)
     return CommonResponse.payload(ResponseException(201), new_unit_of_measurement_item)
 
@@ -34,6 +39,7 @@ def post_unit_of_measurement_item(payload:UnitOfMeasurementItemSchema.MtrUnitOfM
 def delete_unit_of_measurement_item(unit_of_measurement_item_id, db:Session=Depends(get_db)):
     erase_unit_of_measurement_item = UnitOfMeasurementItemCRUD.delete_unit_of_measurement_item_cruds(db,unit_of_measurement_item_id)
     if not erase_unit_of_measurement_item:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_unit_of_measurement_item)
@@ -42,6 +48,7 @@ def delete_unit_of_measurement_item(unit_of_measurement_item_id, db:Session=Depe
 def put_unit_of_measurement_item(payload:UnitOfMeasurementItemSchema.MtrUnitOfMeasurementItemGetSchema, unit_of_measurement_item_id,db:Session=Depends(get_db)):
     update_unit_of_measurement_item, update_data_new  = UnitOfMeasurementItemCRUD.put_unit_of_measurement_item_cruds(db,payload, unit_of_measurement_item_id)
     if not update_unit_of_measurement_item:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_unit_of_measurement_item(payload:UnitOfMeasurementItemSchema.MtrUnitOfMe
 def patch_unit_of_measurement_item(unit_of_measurement_item_id,db:Session=Depends(get_db)):
     active_unit_of_measurement_item  = UnitOfMeasurementItemCRUD.patch_unit_of_measurement_item_cruds(db, unit_of_measurement_item_id)
     if not active_unit_of_measurement_item:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_unit_of_measurement_item.is_active = not active_unit_of_measurement_item.is_active
     db.commit()

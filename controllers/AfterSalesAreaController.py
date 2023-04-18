@@ -6,7 +6,7 @@ from configs.database import get_db
 
 router = APIRouter(tags=["After Sales Area"],prefix="/api/general")
 
-@router.get("/aftersales-areas")
+@router.get("/after-sales-areas")
 def get_aftersales_areas(db:Session=Depends(get_db)):
     items = AfterSalesAreaCRUD.get_aftersales_area_cruds(db)
     if not items:
@@ -17,7 +17,7 @@ def get_aftersales_areas(db:Session=Depends(get_db)):
         "data" : items
     }
 
-@router.post("/aftersales-area")
+@router.post("/after-sales-area")
 def post_after_sales_area(payload:AfterSalesAreaSchema.MtrAftersalesAreaSchema,db:Session=Depends(get_db)):
     new_data = AfterSalesAreaCRUD.post_aftersales_area_cruds(**payload.dict())
     db.add(new_data)

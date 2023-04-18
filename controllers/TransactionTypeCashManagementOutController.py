@@ -3,6 +3,7 @@ from cruds import TransactionTypeCashManagementOutCRUD
 from exceptions.RequestException import ResponseException
 from schemas import TransactionTypeCashManagementOutSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_transaction_type_cash_management_out(transaction_type_cash_management_ou
 
 @router.post("/create-transaction-type-cash-management-out", status_code=201)
 def post_transaction_type_cash_management_out(payload:TransactionTypeCashManagementOutSchema.MtrTransactionTypeCashManagementOutGetSchema,db:Session=Depends(get_db)):
-    new_transaction_type_cash_management_out = TransactionTypeCashManagementOutCRUD.post_transaction_type_cash_management_out_cruds(db, payload)
-    db.add(new_transaction_type_cash_management_out)
-    db.commit()
+    try:
+        new_transaction_type_cash_management_out = TransactionTypeCashManagementOutCRUD.post_transaction_type_cash_management_out_cruds(db, payload)
+        db.add(new_transaction_type_cash_management_out)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_transaction_type_cash_management_out)
     return CommonResponse.payload(ResponseException(201), new_transaction_type_cash_management_out)
 
@@ -34,6 +39,7 @@ def post_transaction_type_cash_management_out(payload:TransactionTypeCashManagem
 def delete_transaction_type_cash_management_out(transaction_type_cash_management_out_id, db:Session=Depends(get_db)):
     erase_transaction_type_cash_management_out = TransactionTypeCashManagementOutCRUD.delete_transaction_type_cash_management_out_cruds(db,transaction_type_cash_management_out_id)
     if not erase_transaction_type_cash_management_out:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_transaction_type_cash_management_out)
@@ -42,6 +48,7 @@ def delete_transaction_type_cash_management_out(transaction_type_cash_management
 def put_transaction_type_cash_management_out(payload:TransactionTypeCashManagementOutSchema.MtrTransactionTypeCashManagementOutGetSchema, transaction_type_cash_management_out_id,db:Session=Depends(get_db)):
     update_transaction_type_cash_management_out, update_data_new  = TransactionTypeCashManagementOutCRUD.put_transaction_type_cash_management_out_cruds(db,payload, transaction_type_cash_management_out_id)
     if not update_transaction_type_cash_management_out:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_transaction_type_cash_management_out(payload:TransactionTypeCashManageme
 def patch_transaction_type_cash_management_out(transaction_type_cash_management_out_id,db:Session=Depends(get_db)):
     active_transaction_type_cash_management_out  = TransactionTypeCashManagementOutCRUD.patch_transaction_type_cash_management_out_cruds(db, transaction_type_cash_management_out_id)
     if not active_transaction_type_cash_management_out:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_transaction_type_cash_management_out.is_active = not active_transaction_type_cash_management_out.is_active
     db.commit()

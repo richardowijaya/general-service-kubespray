@@ -3,6 +3,7 @@ from cruds import FinanceAreaCRUD
 from exceptions.RequestException import ResponseException
 from schemas import FinanceAreaSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,12 @@ def get_finance_area(finance_area_id, db:Session=Depends(get_db)):
 
 @router.post("/create-finance-area", status_code=201)
 def post_finance_area(payload:FinanceAreaSchema.MtrFinanceAreaGetSchema,db:Session=Depends(get_db)):
-    new_finance_area = FinanceAreaCRUD.post_finance_area_cruds(db, payload)
-    db.add(new_finance_area)
-    db.commit()
+    try: 
+        new_finance_area = FinanceAreaCRUD.post_finance_area_cruds(db, payload)
+        db.add(new_finance_area)
+        db.commit()
+    except IntegrityError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_finance_area)
     return CommonResponse.payload(ResponseException(201), new_finance_area)
 
@@ -34,6 +38,7 @@ def post_finance_area(payload:FinanceAreaSchema.MtrFinanceAreaGetSchema,db:Sessi
 def delete_finance_area(finance_area_id, db:Session=Depends(get_db)):
     erase_finance_area = FinanceAreaCRUD.delete_finance_area_cruds(db,finance_area_id)
     if not erase_finance_area:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_finance_area)
@@ -42,6 +47,7 @@ def delete_finance_area(finance_area_id, db:Session=Depends(get_db)):
 def put_finance_area(payload:FinanceAreaSchema.MtrFinanceAreaGetSchema, finance_area_id,db:Session=Depends(get_db)):
     update_finance_area, update_data_new  = FinanceAreaCRUD.put_finance_area_cruds(db,payload, finance_area_id)
     if not update_finance_area:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +57,7 @@ def put_finance_area(payload:FinanceAreaSchema.MtrFinanceAreaGetSchema, finance_
 def patch_finance_area(finance_area_id,db:Session=Depends(get_db)):
     active_finance_area  = FinanceAreaCRUD.patch_finance_area_cruds(db, finance_area_id)
     if not active_finance_area:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_finance_area.is_active = not active_finance_area.is_active
     db.commit()

@@ -3,6 +3,7 @@ from cruds import BusinessTypeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import BusinessTypeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_business_type(business_type_id, db:Session=Depends(get_db)):
 
 @router.post("/create-business-type", status_code=201)
 def post_business_type(payload:BusinessTypeSchema.MtrBusinessTypeGetSchema,db:Session=Depends(get_db)):
-    new_business_type = BusinessTypeCRUD.post_business_type_cruds(db, payload)
-    db.add(new_business_type)
-    db.commit()
+    try:
+        new_business_type = BusinessTypeCRUD.post_business_type_cruds(db, payload)
+        db.add(new_business_type)
+        db.commit()
+    except IntegrityError: 
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_business_type)
     return CommonResponse.payload(ResponseException(201), new_business_type)
 
@@ -34,6 +39,7 @@ def post_business_type(payload:BusinessTypeSchema.MtrBusinessTypeGetSchema,db:Se
 def delete_business_type(business_type_id, db:Session=Depends(get_db)):
     erase_business_type = BusinessTypeCRUD.delete_business_type_cruds(db,business_type_id)
     if not erase_business_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_business_type)
@@ -42,6 +48,7 @@ def delete_business_type(business_type_id, db:Session=Depends(get_db)):
 def put_business_type(payload:BusinessTypeSchema.MtrBusinessTypeGetSchema, business_type_id,db:Session=Depends(get_db)):
     update_business_type, update_data_new  = BusinessTypeCRUD.put_business_type_cruds(db,payload, business_type_id)
     if not update_business_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_business_type(payload:BusinessTypeSchema.MtrBusinessTypeGetSchema, busin
 def patch_business_type(business_type_id,db:Session=Depends(get_db)):
     active_business_type  = BusinessTypeCRUD.patch_business_type_cruds(db, business_type_id)
     if not active_business_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_business_type.is_active = not active_business_type.is_active
     db.commit()

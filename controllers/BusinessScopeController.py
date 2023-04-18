@@ -3,6 +3,7 @@ from cruds import BusinessScopeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import BusinessScopeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_business_scope(business_scope_id, db:Session=Depends(get_db)):
 
 @router.post("/create-business-scope", status_code=201)
 def post_business_scope(payload:BusinessScopeSchema.MtrBusinessScopeGetSchema,db:Session=Depends(get_db)):
-    new_business_scope = BusinessScopeCRUD.post_business_scope_cruds(db, payload)
-    db.add(new_business_scope)
-    db.commit()
+    try:
+        new_business_scope = BusinessScopeCRUD.post_business_scope_cruds(db, payload)
+        db.add(new_business_scope)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_business_scope)
     return CommonResponse.payload(ResponseException(201), new_business_scope)
 
@@ -34,6 +39,7 @@ def post_business_scope(payload:BusinessScopeSchema.MtrBusinessScopeGetSchema,db
 def delete_business_scope(business_scope_id, db:Session=Depends(get_db)):
     erase_business_scope = BusinessScopeCRUD.delete_business_scope_cruds(db,business_scope_id)
     if not erase_business_scope:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_business_scope)
@@ -42,6 +48,7 @@ def delete_business_scope(business_scope_id, db:Session=Depends(get_db)):
 def put_business_scope(payload:BusinessScopeSchema.MtrBusinessScopeGetSchema, business_scope_id,db:Session=Depends(get_db)):
     update_business_scope, update_data_new  = BusinessScopeCRUD.put_business_scope_cruds(db,payload, business_scope_id)
     if not update_business_scope:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_business_scope(payload:BusinessScopeSchema.MtrBusinessScopeGetSchema, bu
 def patch_business_scope(business_scope_id,db:Session=Depends(get_db)):
     active_business_scope  = BusinessScopeCRUD.patch_business_scope_cruds(db, business_scope_id)
     if not active_business_scope:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_business_scope.is_active = not active_business_scope.is_active
     db.commit()
