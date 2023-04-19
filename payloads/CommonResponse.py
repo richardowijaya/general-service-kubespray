@@ -1,5 +1,3 @@
-from typing import List
-
 def payloads(results:str, data:list):
     return {
         "messages":results,
