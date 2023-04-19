@@ -1,21 +1,25 @@
 from sqlalchemy.orm import Session
 from models import AfterSalesAreaModel
 
-def get_aftersales_area_cruds(db:Session):
-    aftersales_areas = db.query(AfterSalesAreaModel.MtrAftersalesArea).all()
-    return aftersales_areas
+def get_after_sales_areas_cruds(db:Session, offset:int=0, limit:int=100):
+    return db.query(AfterSalesAreaModel.MtrAfterSalesArea).order_by(AfterSalesAreaModel.MtrAfterSalesArea.after_sales_area_id).offset(offset).limit(limit).all()
 
-def post_aftersales_area_cruds(payload:AfterSalesAreaModel.MtrAftersalesArea,db:Session):
-    new_aftersales_area = AfterSalesAreaModel.MtrAftersalesArea(**payload.dict())
-    if new_aftersales_area.is_active==True:
-        new_aftersales_area.is_active = 1
-    else:
-        new_aftersales_area.is_active = 0
-    return new_aftersales_area
 
-def get_new_aftersales_area_by_id_cruds(db:Session,get_id:int):
-    aftersales_area = db.query(AfterSalesAreaModel.MtrAftersalesArea).filter(AfterSalesAreaModel.MtrAftersalesArea.aftersales_area_id==get_id)
-    return aftersales_area
+def get_after_sales_area_cruds(db:Session,get_id:int):
+    return  db.query(AfterSalesAreaModel.MtrAfterSalesArea).filter(AfterSalesAreaModel.MtrAfterSalesArea.after_sales_area_id==get_id).first()
+    
 
-def update_aftersales_area_cruds(payload:AfterSalesAreaModel.MtrAftersalesArea,db:Session):
-    update_aftersales_area = AfterSalesAreaModel.MtrAftersalesArea(**payload.dict())    
+def post_after_sales_area_cruds(db:Session, payload:AfterSalesAreaModel.MtrAfterSalesArea):
+    return AfterSalesAreaModel.MtrAfterSalesArea(**payload.dict())
+
+def delete_after_sales_area_cruds(db:Session,get_id:int):
+    return db.query(AfterSalesAreaModel.MtrAfterSalesArea).filter(AfterSalesAreaModel.MtrAfterSalesArea.after_sales_area_id==get_id).delete(synchronize_session=False)
+    
+def put_after_sales_area_cruds(db:Session,payload:AfterSalesAreaModel.MtrAfterSalesArea, get_id:int):
+    edit_after_sales_area = db.query(AfterSalesAreaModel.MtrAfterSalesArea).filter(AfterSalesAreaModel.MtrAfterSalesArea.after_sales_area_id==get_id)
+    edit_after_sales_area.update(payload.dict())
+    messages_after_sales_area = edit_after_sales_area.first()
+    return edit_after_sales_area, messages_after_sales_area
+
+def patch_after_sales_area_cruds(db:Session, get_id:int):
+    return db.query(AfterSalesAreaModel.MtrAfterSalesArea).filter(AfterSalesAreaModel.MtrAfterSalesArea.after_sales_area_id==get_id).first()

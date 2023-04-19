@@ -3,6 +3,7 @@ from cruds import CustomerClassCRUD
 from exceptions.RequestException import ResponseException
 from schemas import CustomerClassSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
