@@ -3,6 +3,7 @@ from cruds import ItemGroupCRUD
 from exceptions.RequestException import ResponseException
 from schemas import ItemGroupSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_item_group(item_group_id, db:Session=Depends(get_db)):
 
 @router.post("/create-item-group", status_code=201)
 def post_item_group(payload:ItemGroupSchema.MtrItemGroupGetSchema,db:Session=Depends(get_db)):
-    new_item_group = ItemGroupCRUD.post_item_group_cruds(db, payload)
-    db.add(new_item_group)
-    db.commit()
+    try:
+        new_item_group = ItemGroupCRUD.post_item_group_cruds(db, payload)
+        db.add(new_item_group)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_item_group)
     return CommonResponse.payload(ResponseException(201), new_item_group)
 
@@ -34,6 +39,7 @@ def post_item_group(payload:ItemGroupSchema.MtrItemGroupGetSchema,db:Session=Dep
 def delete_item_group(item_group_id, db:Session=Depends(get_db)):
     erase_item_group = ItemGroupCRUD.delete_item_group_cruds(db,item_group_id)
     if not erase_item_group:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_item_group)
@@ -42,6 +48,7 @@ def delete_item_group(item_group_id, db:Session=Depends(get_db)):
 def put_item_group(payload:ItemGroupSchema.MtrItemGroupGetSchema, item_group_id,db:Session=Depends(get_db)):
     update_item_group, update_data_new  = ItemGroupCRUD.put_item_group_cruds(db,payload, item_group_id)
     if not update_item_group:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_item_group(payload:ItemGroupSchema.MtrItemGroupGetSchema, item_group_id,
 def patch_item_group(item_group_id,db:Session=Depends(get_db)):
     active_item_group  = ItemGroupCRUD.patch_item_group_cruds(db, item_group_id)
     if not active_item_group:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_item_group.is_active = not active_item_group.is_active
     db.commit()

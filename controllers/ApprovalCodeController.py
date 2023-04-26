@@ -3,6 +3,7 @@ from cruds import ApprovalCodeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import ApprovalCodeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -14,7 +15,7 @@ def get_approval_codes(db:Session=Depends(get_db)):
     if not approval_codes:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     return CommonResponse.payloads(ResponseException(200),approval_codes)
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
 @router.get("/get-approval-code/{approval_code_id}", status_code=200)
 def get_approval_code(approval_code_id, db:Session=Depends(get_db)):
     approval_code = ApprovalCodeCRUD.get_approval_code_cruds(db, approval_code_id)
@@ -24,9 +25,13 @@ def get_approval_code(approval_code_id, db:Session=Depends(get_db)):
 
 @router.post("/create-approval-code", status_code=201)
 def post_approval_code(payload:ApprovalCodeSchema.MtrApprovalCodeGetSchema,db:Session=Depends(get_db)):
-    new_approval_code = ApprovalCodeCRUD.post_approval_code_cruds(db, payload)
-    db.add(new_approval_code)
-    db.commit()
+    try:
+        new_approval_code = ApprovalCodeCRUD.post_approval_code_cruds(db, payload)
+        db.add(new_approval_code)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_approval_code)
     return CommonResponse.payload(ResponseException(201), new_approval_code)
 
@@ -34,6 +39,7 @@ def post_approval_code(payload:ApprovalCodeSchema.MtrApprovalCodeGetSchema,db:Se
 def delete_approval_code(approval_code_id, db:Session=Depends(get_db)):
     erase_approval_code = ApprovalCodeCRUD.delete_approval_code_cruds(db,approval_code_id)
     if not erase_approval_code:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_approval_code)
@@ -42,6 +48,7 @@ def delete_approval_code(approval_code_id, db:Session=Depends(get_db)):
 def put_approval_code(payload:ApprovalCodeSchema.MtrApprovalCodeGetSchema, approval_code_id,db:Session=Depends(get_db)):
     update_approval_code, update_data_new  = ApprovalCodeCRUD.put_approval_code_cruds(db,payload, approval_code_id)
     if not update_approval_code:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_approval_code(payload:ApprovalCodeSchema.MtrApprovalCodeGetSchema, appro
 def patch_approval_code(approval_code_id,db:Session=Depends(get_db)):
     active_approval_code  = ApprovalCodeCRUD.patch_approval_code_cruds(db, approval_code_id)
     if not active_approval_code:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_approval_code.is_active = not active_approval_code.is_active
     db.commit()

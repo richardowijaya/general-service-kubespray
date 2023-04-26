@@ -3,6 +3,7 @@ from cruds import TransactionTypeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import TransactionTypeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_transaction_type(transaction_type_id, db:Session=Depends(get_db)):
 
 @router.post("/create-transaction-type", status_code=201)
 def post_transaction_type(payload:TransactionTypeSchema.MtrTransactionTypeGetSchema,db:Session=Depends(get_db)):
-    new_transaction_type = TransactionTypeCRUD.post_transaction_type_cruds(db, payload)
-    db.add(new_transaction_type)
-    db.commit()
+    try:
+        new_transaction_type = TransactionTypeCRUD.post_transaction_type_cruds(db, payload)
+        db.add(new_transaction_type)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_transaction_type)
     return CommonResponse.payload(ResponseException(201), new_transaction_type)
 
@@ -34,6 +39,7 @@ def post_transaction_type(payload:TransactionTypeSchema.MtrTransactionTypeGetSch
 def delete_transaction_type(transaction_type_id, db:Session=Depends(get_db)):
     erase_transaction_type = TransactionTypeCRUD.delete_transaction_type_cruds(db,transaction_type_id)
     if not erase_transaction_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_transaction_type)
@@ -42,6 +48,7 @@ def delete_transaction_type(transaction_type_id, db:Session=Depends(get_db)):
 def put_transaction_type(payload:TransactionTypeSchema.MtrTransactionTypeGetSchema, transaction_type_id,db:Session=Depends(get_db)):
     update_transaction_type, update_data_new  = TransactionTypeCRUD.put_transaction_type_cruds(db,payload, transaction_type_id)
     if not update_transaction_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_transaction_type(payload:TransactionTypeSchema.MtrTransactionTypeGetSche
 def patch_transaction_type(transaction_type_id,db:Session=Depends(get_db)):
     active_transaction_type  = TransactionTypeCRUD.patch_transaction_type_cruds(db, transaction_type_id)
     if not active_transaction_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_transaction_type.is_active = not active_transaction_type.is_active
     db.commit()

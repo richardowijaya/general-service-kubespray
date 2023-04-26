@@ -3,6 +3,7 @@ from cruds import LineTypeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import LineTypeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_line_type(line_type_id, db:Session=Depends(get_db)):
 
 @router.post("/create-line-type", status_code=201)
 def post_line_type(payload:LineTypeSchema.MtrLineTypeGetSchema,db:Session=Depends(get_db)):
-    new_line_type = LineTypeCRUD.post_line_type_cruds(db, payload)
-    db.add(new_line_type)
-    db.commit()
+    try:
+        new_line_type = LineTypeCRUD.post_line_type_cruds(db, payload)
+        db.add(new_line_type)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_line_type)
     return CommonResponse.payload(ResponseException(201), new_line_type)
 
@@ -34,6 +39,7 @@ def post_line_type(payload:LineTypeSchema.MtrLineTypeGetSchema,db:Session=Depend
 def delete_line_type(line_type_id, db:Session=Depends(get_db)):
     erase_line_type = LineTypeCRUD.delete_line_type_cruds(db,line_type_id)
     if not erase_line_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_line_type)
@@ -42,6 +48,7 @@ def delete_line_type(line_type_id, db:Session=Depends(get_db)):
 def put_line_type(payload:LineTypeSchema.MtrLineTypeGetSchema, line_type_id,db:Session=Depends(get_db)):
     update_line_type, update_data_new  = LineTypeCRUD.put_line_type_cruds(db,payload, line_type_id)
     if not update_line_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_line_type(payload:LineTypeSchema.MtrLineTypeGetSchema, line_type_id,db:S
 def patch_line_type(line_type_id,db:Session=Depends(get_db)):
     active_line_type  = LineTypeCRUD.patch_line_type_cruds(db, line_type_id)
     if not active_line_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_line_type.is_active = not active_line_type.is_active
     db.commit()

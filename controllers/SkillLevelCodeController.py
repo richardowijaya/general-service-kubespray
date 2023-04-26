@@ -3,6 +3,7 @@ from cruds import SkillLevelCodeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import SkillLevelCodeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_skill_level_code(skill_level_code_id, db:Session=Depends(get_db)):
 
 @router.post("/create-skill-level-code", status_code=201)
 def post_skill_level_code(payload:SkillLevelCodeSchema.MtrSkillLevelCodeGetSchema,db:Session=Depends(get_db)):
-    new_skill_level_code = SkillLevelCodeCRUD.post_skill_level_code_cruds(db, payload)
-    db.add(new_skill_level_code)
-    db.commit()
+    try:
+        new_skill_level_code = SkillLevelCodeCRUD.post_skill_level_code_cruds(db, payload)
+        db.add(new_skill_level_code)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_skill_level_code)
     return CommonResponse.payload(ResponseException(201), new_skill_level_code)
 
@@ -34,6 +39,7 @@ def post_skill_level_code(payload:SkillLevelCodeSchema.MtrSkillLevelCodeGetSchem
 def delete_skill_level_code(skill_level_code_id, db:Session=Depends(get_db)):
     erase_skill_level_code = SkillLevelCodeCRUD.delete_skill_level_code_cruds(db,skill_level_code_id)
     if not erase_skill_level_code:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_skill_level_code)
@@ -42,6 +48,7 @@ def delete_skill_level_code(skill_level_code_id, db:Session=Depends(get_db)):
 def put_skill_level_code(payload:SkillLevelCodeSchema.MtrSkillLevelCodeGetSchema, skill_level_code_id,db:Session=Depends(get_db)):
     update_skill_level_code, update_data_new  = SkillLevelCodeCRUD.put_skill_level_code_cruds(db,payload, skill_level_code_id)
     if not update_skill_level_code:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_skill_level_code(payload:SkillLevelCodeSchema.MtrSkillLevelCodeGetSchema
 def patch_skill_level_code(skill_level_code_id,db:Session=Depends(get_db)):
     active_skill_level_code  = SkillLevelCodeCRUD.patch_skill_level_code_cruds(db, skill_level_code_id)
     if not active_skill_level_code:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_skill_level_code.is_active = not active_skill_level_code.is_active
     db.commit()

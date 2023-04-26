@@ -3,6 +3,7 @@ from cruds import WorkOrderTransactionTypeCRUD
 from exceptions.RequestException import ResponseException
 from schemas import WorkOrderTransactionTypeSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_work_order_transaction_type(work_order_transaction_type_id, db:Session=D
 
 @router.post("/create-work-order-transaction-type", status_code=201)
 def post_work_order_transaction_type(payload:WorkOrderTransactionTypeSchema.MtrWorkOrderTransactionTypeGetSchema,db:Session=Depends(get_db)):
-    new_work_order_transaction_type = WorkOrderTransactionTypeCRUD.post_work_order_transaction_type_cruds(db, payload)
-    db.add(new_work_order_transaction_type)
-    db.commit()
+    try:
+        new_work_order_transaction_type = WorkOrderTransactionTypeCRUD.post_work_order_transaction_type_cruds(db, payload)
+        db.add(new_work_order_transaction_type)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_work_order_transaction_type)
     return CommonResponse.payload(ResponseException(201), new_work_order_transaction_type)
 
@@ -34,6 +39,7 @@ def post_work_order_transaction_type(payload:WorkOrderTransactionTypeSchema.MtrW
 def delete_work_order_transaction_type(work_order_transaction_type_id, db:Session=Depends(get_db)):
     erase_work_order_transaction_type = WorkOrderTransactionTypeCRUD.delete_work_order_transaction_type_cruds(db,work_order_transaction_type_id)
     if not erase_work_order_transaction_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_work_order_transaction_type)
@@ -42,6 +48,7 @@ def delete_work_order_transaction_type(work_order_transaction_type_id, db:Sessio
 def put_work_order_transaction_type(payload:WorkOrderTransactionTypeSchema.MtrWorkOrderTransactionTypeGetSchema, work_order_transaction_type_id,db:Session=Depends(get_db)):
     update_work_order_transaction_type, update_data_new  = WorkOrderTransactionTypeCRUD.put_work_order_transaction_type_cruds(db,payload, work_order_transaction_type_id)
     if not update_work_order_transaction_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_work_order_transaction_type(payload:WorkOrderTransactionTypeSchema.MtrWo
 def patch_work_order_transaction_type(work_order_transaction_type_id,db:Session=Depends(get_db)):
     active_work_order_transaction_type  = WorkOrderTransactionTypeCRUD.patch_work_order_transaction_type_cruds(db, work_order_transaction_type_id)
     if not active_work_order_transaction_type:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_work_order_transaction_type.is_active = not active_work_order_transaction_type.is_active
     db.commit()

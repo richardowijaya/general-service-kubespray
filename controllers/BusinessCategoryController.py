@@ -3,6 +3,7 @@ from cruds import BusinessCategoryCRUD
 from exceptions.RequestException import ResponseException
 from schemas import BusinessCategorySchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_business_category(business_category_id, db:Session=Depends(get_db)):
 
 @router.post("/create-business-category", status_code=201)
 def post_business_category(payload:BusinessCategorySchema.MtrBusinessCategoryGetSchema,db:Session=Depends(get_db)):
-    new_business_category = BusinessCategoryCRUD.post_business_category_cruds(db, payload)
-    db.add(new_business_category)
-    db.commit()
+    try:
+        new_business_category = BusinessCategoryCRUD.post_business_category_cruds(db, payload)
+        db.add(new_business_category)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_business_category)
     return CommonResponse.payload(ResponseException(201), new_business_category)
 
@@ -34,6 +39,7 @@ def post_business_category(payload:BusinessCategorySchema.MtrBusinessCategoryGet
 def delete_business_category(business_category_id, db:Session=Depends(get_db)):
     erase_business_category = BusinessCategoryCRUD.delete_business_category_cruds(db,business_category_id)
     if not erase_business_category:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_business_category)
@@ -42,6 +48,7 @@ def delete_business_category(business_category_id, db:Session=Depends(get_db)):
 def put_business_category(payload:BusinessCategorySchema.MtrBusinessCategoryGetSchema, business_category_id,db:Session=Depends(get_db)):
     update_business_category, update_data_new  = BusinessCategoryCRUD.put_business_category_cruds(db,payload, business_category_id)
     if not update_business_category:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_business_category(payload:BusinessCategorySchema.MtrBusinessCategoryGetS
 def patch_business_category(business_category_id,db:Session=Depends(get_db)):
     active_business_category  = BusinessCategoryCRUD.patch_business_category_cruds(db, business_category_id)
     if not active_business_category:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_business_category.is_active = not active_business_category.is_active
     db.commit()

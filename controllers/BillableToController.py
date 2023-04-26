@@ -3,6 +3,7 @@ from cruds import BillableToCRUD
 from exceptions.RequestException import ResponseException
 from schemas import BillableToSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_billable_to(billable_to_id, db:Session=Depends(get_db)):
 
 @router.post("/create-billable-to", status_code=201)
 def post_billable_to(payload:BillableToSchema.MtrBillableToGetSchema,db:Session=Depends(get_db)):
-    new_billable_to = BillableToCRUD.post_billable_to_cruds(db, payload)
-    db.add(new_billable_to)
-    db.commit()
+    try:
+        new_billable_to = BillableToCRUD.post_billable_to_cruds(db, payload)
+        db.add(new_billable_to)
+        db.commit()
+    except IntegrityError: 
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_billable_to)
     return CommonResponse.payload(ResponseException(201), new_billable_to)
 
@@ -34,6 +39,7 @@ def post_billable_to(payload:BillableToSchema.MtrBillableToGetSchema,db:Session=
 def delete_billable_to(billable_to_id, db:Session=Depends(get_db)):
     erase_billable_to = BillableToCRUD.delete_billable_to_cruds(db,billable_to_id)
     if not erase_billable_to:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_billable_to)
@@ -42,6 +48,7 @@ def delete_billable_to(billable_to_id, db:Session=Depends(get_db)):
 def put_billable_to(payload:BillableToSchema.MtrBillableToGetSchema, billable_to_id,db:Session=Depends(get_db)):
     update_billable_to, update_data_new  = BillableToCRUD.put_billable_to_cruds(db,payload, billable_to_id)
     if not update_billable_to:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_billable_to(payload:BillableToSchema.MtrBillableToGetSchema, billable_to
 def patch_billable_to(billable_to_id,db:Session=Depends(get_db)):
     active_billable_to  = BillableToCRUD.patch_billable_to_cruds(db, billable_to_id)
     if not active_billable_to:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_billable_to.is_active = not active_billable_to.is_active
     db.commit()

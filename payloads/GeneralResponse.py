@@ -1,15 +1,11 @@
-from typing import List
-
-def payloads(status:str, results:int, data:list):
+def payloads(results:str, data:list):
     return {
-        "status_code":status,
-        "results":results,
+        "messages":results,
         "payloads":data
     }
 
-def payload(status:str, results:int, data:list):
+def payload(results:str, data:list):
     return {
-        "status_code":status,
-        "results":results,
+        "messages":results,
         "payloads":data
     }

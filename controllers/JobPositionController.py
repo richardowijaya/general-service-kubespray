@@ -4,6 +4,7 @@ from exceptions.RequestException import ResponseException
 from cruds import JobPositionCRUD
 from schemas import JobPositionSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 
 router = APIRouter(tags=["Job Position"],prefix="/api/general")
@@ -24,9 +25,13 @@ def get_job_position(job_position_id, db:Session=Depends(get_db)):
 
 @router.post("/create-job-position", status_code=status.HTTP_201_CREATED)
 def post_job_position(payload:JobPositionSchema.MtrJobPositionGetSchema,db:Session=Depends(get_db)):
-    new_job_position = JobPositionCRUD.post_job_position_cruds(db, payload)
-    db.add(new_job_position)
-    db.commit()
+    try:
+        new_job_position = JobPositionCRUD.post_job_position_cruds(db, payload)
+        db.add(new_job_position)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_job_position)
     return CommonResponse.payload(ResponseException(201), new_job_position)
 
@@ -34,6 +39,7 @@ def post_job_position(payload:JobPositionSchema.MtrJobPositionGetSchema,db:Sessi
 def delete_job_position(job_position_id, db:Session=Depends(get_db)):
     erase_job_position = JobPositionCRUD.delete_job_position_cruds(db,job_position_id)
     if not erase_job_position:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_job_position)
@@ -42,6 +48,7 @@ def delete_job_position(job_position_id, db:Session=Depends(get_db)):
 def put_job_position(payload:JobPositionSchema.MtrJobPositionGetSchema, job_position_id,db:Session=Depends(get_db)):
     update_job_position, update_data_new  = JobPositionCRUD.put_job_position_cruds(db,payload, job_position_id)
     if not update_job_position:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_job_position(payload:JobPositionSchema.MtrJobPositionGetSchema, job_posi
 def patch_job_positionn(job_position_id,db:Session=Depends(get_db)):
     active_job_position  = JobPositionCRUD.patch_job_position_cruds(db, job_position_id)
     if not active_job_position:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_job_position.is_active = not active_job_position.is_active
     db.commit()

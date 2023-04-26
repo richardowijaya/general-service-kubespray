@@ -3,6 +3,7 @@ from cruds import IncentiveLevelCRUD
 from exceptions.RequestException import ResponseException
 from schemas import IncentiveLevelSchema
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from configs.database import get_db
 from payloads import CommonResponse
 
@@ -24,9 +25,13 @@ def get_incentive_level(incentive_level_id, db:Session=Depends(get_db)):
 
 @router.post("/create-incentive-level", status_code=201)
 def post_incentive_level(payload:IncentiveLevelSchema.MtrIncentiveLevelGetSchema,db:Session=Depends(get_db)):
-    new_incentive_level = IncentiveLevelCRUD.post_incentive_level_cruds(db, payload)
-    db.add(new_incentive_level)
-    db.commit()
+    try:
+        new_incentive_level = IncentiveLevelCRUD.post_incentive_level_cruds(db, payload)
+        db.add(new_incentive_level)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=ResponseException(409))
     db.refresh(new_incentive_level)
     return CommonResponse.payload(ResponseException(201), new_incentive_level)
 
@@ -34,6 +39,7 @@ def post_incentive_level(payload:IncentiveLevelSchema.MtrIncentiveLevelGetSchema
 def delete_incentive_level(incentive_level_id, db:Session=Depends(get_db)):
     erase_incentive_level = IncentiveLevelCRUD.delete_incentive_level_cruds(db,incentive_level_id)
     if not erase_incentive_level:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     return CommonResponse.payload(ResponseException(202), erase_incentive_level)
@@ -42,6 +48,7 @@ def delete_incentive_level(incentive_level_id, db:Session=Depends(get_db)):
 def put_incentive_level(payload:IncentiveLevelSchema.MtrIncentiveLevelGetSchema, incentive_level_id,db:Session=Depends(get_db)):
     update_incentive_level, update_data_new  = IncentiveLevelCRUD.put_incentive_level_cruds(db,payload, incentive_level_id)
     if not update_incentive_level:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     db.commit()
     db.refresh(update_data_new)
@@ -51,6 +58,7 @@ def put_incentive_level(payload:IncentiveLevelSchema.MtrIncentiveLevelGetSchema,
 def patch_incentive_level(incentive_level_id,db:Session=Depends(get_db)):
     active_incentive_level  = IncentiveLevelCRUD.patch_incentive_level_cruds(db, incentive_level_id)
     if not active_incentive_level:
+        db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     active_incentive_level.is_active = not active_incentive_level.is_active
     db.commit()

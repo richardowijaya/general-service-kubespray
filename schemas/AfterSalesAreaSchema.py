@@ -1,16 +1,9 @@
 from typing import List, Optional
 from pydantic import BaseModel
 
-class MtrAftersalesAreaSchema(BaseModel):
-    is_active:bool
-    aftersales_area_id:int
-    aftersales_area_code:str
-    aftersales_area_name:str
-
+class MtrAfterSalesAreaGetSchema(BaseModel):
+    after_sales_area_code:Optional[str] = None
+    after_sales_area_name:Optional[str] = None
+    
     class Config:
         orm_mode = True
-
-class MtrAftersalesAreaResponse(BaseModel):
-    status:str
-    results:int
-    payloads:List[MtrAftersalesAreaSchema]
