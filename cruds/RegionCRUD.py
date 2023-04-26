@@ -2,55 +2,29 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, column
 from models import RegionModel 
 from schemas import RegionSchema
+import math
+from utils.BoolConvert import strtobool
 
 #get all data
-def get_region_all(db:Session,skip:int,limit:int,query:list[str]):
-    query_data = db.query(RegionModel.MtrRegion).all()
+def get_region_all(db:Session,skip:int,limit:int,query:list[str],query_by:list[str]):    
+    query_check = select(RegionModel.MtrRegion)
+
+    page = skip
+    page_limit = limit
+    total_rows = db.query(RegionModel.MtrRegion).count()
+    total_pages = int(math.ceil(total_rows/page_limit))
+
+    if (query != None):
+        for idx,x in enumerate(query):
+            if query_by[idx] != "is_active":
+                query_check = query_check.where(column(query_by[idx]).contains(query[idx]))
+            query_check = query_check.where(column(query_by[idx]).contains(strtobool(query[idx])))
+
+    query_final = query_check.order_by(RegionModel.MtrRegion.region_id).offset(page*page_limit).limit(page_limit)
+
+    final_res = db.execute(query_final).all()
     
-    if skip == None:
-        page = 1
-        page_limit = 5
-    else:
-        page = skip
-        page_limit = limit 
-    total_rows = len(query_data)
-    total_pages = int(total_rows/page_limit)
-
-    results = db.query(RegionModel.MtrRegion).order_by(RegionModel.MtrRegion.region_id).offset(skip).limit(limit).all()
-
-    query_check = select(RegionModel.MtrRegion).order_by(RegionModel.MtrRegion.region_id)
-
-    hasil = db.execute(str(query_check)).all()
-    print(str(hasil))
-
-    '''
-    from sqlmodel import Session, column, select
-    from models.RegionModel import Region
-
-
-    def get_all_users(session: Session, skip: int = 0, limit: int = 100, filter: list[str] = [], filterParam: list[str] = []):
-        print(filterParam)
-        print(filter)
-        region = select(Region).order_by(Region.region_id).offset(skip).limit(limit)
-
-        if (len(filter) > 0):
-            for idx, x in enumerate(filter):
-
-                if (filterParam[idx] == "is_active"):
-                    region = region.where(column(filterParam[idx]) == bool(filter[idx]))
-                    continue
-
-                region = region.where(column(filterParam[idx]).contains(filter[idx]))
-
-        return session.exec(region).all()
-    '''
-
-
-    #checking any filter that send to back-end
-    query_results = db.query(RegionModel.MtrRegion).filter(RegionModel.MtrRegion.region_code.like("%"+query[0]+"%"),
-                                                           RegionModel.MtrRegion.region_name.like("%"+query[1]+"%")).order_by(RegionModel.MtrRegion.region_id).offset(skip).limit(limit).all()
-
-    return page,page_limit,total_rows,total_pages,hasil
+    return page,page_limit,total_rows,total_pages,final_res
 
 #get data by filtering the primary_key(ID)
 def get_region_by_id(db:Session,get_id:int):

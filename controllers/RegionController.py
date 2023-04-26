@@ -9,8 +9,8 @@ from typing import Optional
 router = APIRouter(tags=["Region"],prefix="/api/general")
 
 @router.get("/region",status_code=status.HTTP_200_OK)
-async def get_all_data(query_params:list[str]|None = Query(None),page:Optional[int]=None,page_limit:Optional[int]=None,db:Session=Depends(get_db)):
-    page,limit,total_rows,total_pages,results = RegionCRUD.get_region_all(db,page,page_limit,query_params)
+async def get_all_data(query:list[str]|None=Query(None),query_params:list[str]|None = Query(None),page:Optional[int]=None,page_limit:Optional[int]=None,db:Session=Depends(get_db)):
+    page,limit,total_rows,total_pages,results = RegionCRUD.get_region_all(db,page,page_limit,query,query_params)
     if not results:
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="data not found")
     return RegionSchema.MtrRegionPagination(status_code=200,msg_status="success",data=Pagination.PaginationSchema(
