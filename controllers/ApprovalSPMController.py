@@ -15,7 +15,7 @@ def get_approval_spms(db:Session=Depends(get_db)):
     if not approval_spmss:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=ResponseException(404))
     return CommonResponse.payloads(ResponseException(200),approval_spmss)
-
+ 
 @router.get("/get-approval-spm/{approval_spm_id}", status_code=200)
 def get_approval_spm(approval_spm_id, db:Session=Depends(get_db)):
     approval_spm = ApprovalSPMCRUD.get_approval_spm_cruds(db, approval_spm_id)

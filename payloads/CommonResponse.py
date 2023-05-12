@@ -9,3 +9,8 @@ def payload(results:str, data:list):
         "messages":results,
         "payloads":data
     }
+
+def logging(data:list):
+    return{
+        "payloads":data
+    }
