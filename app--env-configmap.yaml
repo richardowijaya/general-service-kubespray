@@ -1,0 +1,13 @@
+apiVersion: v1
+data:
+  DB_NAME: dms_microservices_general_dev
+  DB_PASSWORD: P%40ssw0rd123
+  DB_PORT: "1433"
+  DB_SERVER: 127.0.0.1\SQLEXPRESS
+  DB_USER: dmsdev
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: dms-general-app--env
+  name: app--env

@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  dms-general:
+    build: .
+    command: bash -c 'cd app && uvicorn main:app --host 0.0.0.0'
+    volumes:
+      - .:/app
+    ports:
+      - 8008:8000
+    env_file:
+      - ./app/.env
