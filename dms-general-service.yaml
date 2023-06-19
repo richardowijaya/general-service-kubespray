@@ -10,8 +10,8 @@ metadata:
   name: dms-general
 spec:
   ports:
-    - name: "8008"
-      port: 8008
+    - name: "8000"
+      port: 8000
       targetPort: 8000
   selector:
     io.kompose.service: dms-general
