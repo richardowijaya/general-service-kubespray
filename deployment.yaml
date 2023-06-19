@@ -57,7 +57,7 @@ spec:
                 configMapKeyRef:
                   key: DB_USER
                   name: app--env
-          image: dms-general
+          image: richardoalvin/general-service:v1.0
           name: dms-general
           ports:
             - containerPort: 8000
